@@ -11,9 +11,19 @@ export interface CspOptions {
   isDev: boolean;
   /** URL del proyecto Supabase (API, Auth, Storage). */
   supabaseUrl?: string;
+  /**
+   * Fuerza HTTPS en todos los recursos. Solo se activa cuando el sitio se sirve
+   * por HTTPS: en http://localhost Safari intentaría cargar todo por HTTPS y fallaría.
+   */
+  upgradeInsecureRequests: boolean;
 }
 
-export function buildCsp({ nonce, isDev, supabaseUrl }: CspOptions): string {
+export function buildCsp({
+  nonce,
+  isDev,
+  supabaseUrl,
+  upgradeInsecureRequests,
+}: CspOptions): string {
   const supabaseOrigin = supabaseUrl ? new URL(supabaseUrl).origin : null;
   const supabaseWs = supabaseOrigin ? supabaseOrigin.replace(/^https:/, "wss:") : null;
 
@@ -49,8 +59,7 @@ export function buildCsp({ nonce, isDev, supabaseUrl }: CspOptions): string {
     .map(([name, values]) => `${name} ${values.join(" ")}`)
     .join("; ");
 
-  // En producción forzamos HTTPS para cualquier recurso.
-  return isDev ? policy : `${policy}; upgrade-insecure-requests`;
+  return upgradeInsecureRequests ? `${policy}; upgrade-insecure-requests` : policy;
 }
 
 /** Genera un nonce aleatorio criptográficamente seguro (base64). */

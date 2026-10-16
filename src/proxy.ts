@@ -12,6 +12,7 @@ export function proxy(request: NextRequest) {
     nonce,
     isDev: process.env.NODE_ENV === "development",
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || undefined,
+    upgradeInsecureRequests: (process.env.NEXT_PUBLIC_SITE_URL ?? "").startsWith("https://"),
   });
 
   const requestHeaders = new Headers(request.headers);

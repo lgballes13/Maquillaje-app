@@ -45,6 +45,8 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   (disponibilidad, stock, precios) y maneja datos personales y pagos.
 - **Consecuencia práctica:** no se pueden usar estilos en línea (`style={{...}}`);
   todo va con clases de Tailwind. Una prueba E2E falla si la CSP bloquea algo.
+- `upgrade-insecure-requests` solo se envía si `NEXT_PUBLIC_SITE_URL` empieza por `https://`:
+  en `http://localhost` Safari intentaba cargar todo por HTTPS y la página quedaba sin estilos.
 - Alternativa descartada: CSP con `'unsafe-inline'` (más rápida, pero mucho más débil).
 - Si en la Fase 8 Lighthouse no llega a 90 en rendimiento, se revisa esta decisión.
 
