@@ -1,0 +1,72 @@
+# Integración continua: se ejecuta en cada push y en cada pull request.
+# Si algún paso falla, GitHub marca el commit en rojo.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# Si llega un push nuevo a la misma rama, cancela la ejecución anterior.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Permisos mínimos: el flujo solo necesita leer el código.
+permissions:
+  contents: read
+
+env:
+  # Valores ficticios solo para compilar y probar (no son secretos).
+  NEXT_PUBLIC_SITE_URL: http://localhost:3000
+  NEXT_PUBLIC_BUSINESS_NAME: Estudio de Prueba
+  NEXT_PUBLIC_WHATSAPP_NUMBER: "573001234567"
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  calidad:
+    name: Lint, tipos y pruebas unitarias
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Lint (ESLint)
+        run: npm run lint
+      - name: Tipos (TypeScript)
+        run: npm run typecheck
+      - name: Formato (Prettier)
+        run: npm run format:check
+      - name: Pruebas unitarias (Vitest)
+        run: npm run test
+      - name: Dependencias de producción sin vulnerabilidades altas
+        run: npm audit --omit=dev --audit-level=high
+
+  e2e:
+    name: Pruebas E2E (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: calidad
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Compilar la app
+        run: npm run build
+      - name: Instalar navegadores (Chromium y WebKit/Safari)
+        run: npx playwright install --with-deps chromium webkit
+      - name: Ejecutar pruebas E2E
+        run: npm run test:e2e
+      - name: Guardar reporte si algo falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-playwright
+          path: playwright-report/
+          retention-days: 7
