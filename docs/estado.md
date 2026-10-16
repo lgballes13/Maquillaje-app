@@ -30,8 +30,9 @@
 - PWA: manifiesto, iconos 192/512/maskable y apple-icon (provisionales).
 - Página de inicio provisional, 404 y página de error en español, botón flotante de WhatsApp.
 - Endpoint `/api/health`.
-- Pruebas: 15 unitarias (Vitest) y 12 E2E por navegador (Playwright).
-- CI en GitHub Actions + Dependabot.
+- Pruebas: 16 unitarias (Vitest) y 12 E2E por navegador (Playwright) en Chromium escritorio,
+  móvil 360 px y WebKit (iPhone): 34 pasan y 2 se omiten a propósito (teclado en móvil).
+- CI en GitHub Actions + Dependabot. La CI pasa en verde en `main`.
 
 ## Datos del negocio pendientes (los necesito antes de la Fase 1 o 2)
 
@@ -56,8 +57,10 @@
 
 ## Riesgos y pendientes conocidos
 
-- Las pruebas en WebKit (iPhone) solo se ejecutan en la CI; verificar el primer resultado.
 - `npm audit` reporta vulnerabilidades altas solo en herramientas de desarrollo
   (`eslint-config-next` → `braces`); no llegan a producción. Las dependencias de producción
   tienen 0 vulnerabilidades. Dependabot propondrá la actualización cuando exista.
+- Las acciones de GitHub (`checkout`, `setup-node`, `upload-artifact`) están en v4, que usa
+  Node 20 (obsoleto en GitHub). Dependabot propondrá la actualización.
+- Lighthouse aún no se ha medido; se mide y ajusta en la Fase 8.
 - La CSP con nonce obliga a renderizar todo por petición (ver DT-004); revisar rendimiento en la Fase 8.
