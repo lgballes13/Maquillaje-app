@@ -23,7 +23,7 @@ export default function ErrorPage({
       className="mx-auto flex max-w-md flex-1 flex-col items-center justify-center px-4 py-16 text-center"
     >
       <h1 className="text-2xl font-bold">Algo salió mal</h1>
-      <p className="text-muted-foreground mt-2">
+      <p className="mt-2 text-muted-foreground">
         Tuvimos un problema al cargar esta página. Intenta de nuevo en un momento.
       </p>
       <Button className="mt-6" onClick={() => reset()}>

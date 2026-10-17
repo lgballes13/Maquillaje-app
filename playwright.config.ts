@@ -1,4 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
+import { loadEnvConfig } from "@next/env";
+
+// Carga .env.local (claves de Supabase local) igual que lo hace Next.js.
+loadEnvConfig(process.cwd());
 
 const PORT = Number(process.env.PORT ?? 3000);
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${PORT}`;
@@ -52,6 +56,9 @@ export default defineConfig({
       NEXT_PUBLIC_SITE_URL: baseURL,
       NEXT_PUBLIC_BUSINESS_NAME: "Estudio de Prueba",
       NEXT_PUBLIC_WHATSAPP_NUMBER: "573001234567",
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
     },
   },
 });

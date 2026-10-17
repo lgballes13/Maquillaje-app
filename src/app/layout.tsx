@@ -51,7 +51,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         {/* Enlace oculto para usuarios de teclado: salta directo al contenido. */}
         <a
           href="#contenido"
-          className="focus:bg-primary focus:text-primary-foreground sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:px-4 focus:py-3"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-3 focus:text-primary-foreground"
         >
           Saltar al contenido
         </a>
