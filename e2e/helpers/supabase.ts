@@ -127,3 +127,85 @@ export async function cancelAppointmentInDb(id: string) {
     .eq("id", id);
   if (error) throw error;
 }
+
+// ---------------------------------------------------------------------------
+// Tienda
+// ---------------------------------------------------------------------------
+
+/** Crea un producto activo con un nombre único (para no chocar con otras pruebas). */
+export async function createTestProduct({
+  name = "Producto de prueba",
+  priceCop = 50_000,
+  stock = 5,
+}: { name?: string; priceCop?: number; stock?: number } = {}) {
+  const unique = `${name} ${randomUUID().slice(0, 6)}`;
+  const { data, error } = await adminClient()
+    .from("products")
+    .insert({ name: unique, price_cop: priceCop, stock, is_active: true, sort_order: 1000 })
+    .select("id, name")
+    .single();
+  if (error) throw error;
+  return { id: data.id as string, name: data.name as string, priceCop };
+}
+
+export async function productStock(id: string): Promise<number> {
+  const { data, error } = await adminClient()
+    .from("products")
+    .select("stock")
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+  return data.stock as number;
+}
+
+export async function shippingFee(): Promise<number> {
+  const { data, error } = await adminClient()
+    .from("business_rules")
+    .select("shipping_fee_cop")
+    .order("version", { ascending: false })
+    .limit(1)
+    .single();
+  if (error) throw error;
+  return data.shipping_fee_cop as number;
+}
+
+/** Crea un pedido YA PAGADO directo en la base (para probar el panel de pedidos). */
+export async function insertPaidOrder({
+  customerId,
+  product,
+  recipientName,
+}: {
+  customerId: string;
+  product: { id: string; name: string; priceCop: number };
+  recipientName: string;
+}) {
+  const supabase = adminClient();
+  const { version } = await currentRules();
+  const { data: order, error } = await supabase
+    .from("orders")
+    .insert({
+      customer_id: customerId,
+      status: "paid",
+      delivery_method: "pickup",
+      recipient_name: recipientName,
+      phone: "3001234567",
+      rules_version: version,
+      subtotal_cop: product.priceCop,
+      shipping_cop: 0,
+      total_cop: product.priceCop,
+      paid_at: new Date().toISOString(),
+    })
+    .select("id, number")
+    .single();
+  if (error) throw error;
+  const { error: itemError } = await supabase.from("order_items").insert({
+    order_id: order.id,
+    product_id: product.id,
+    product_name: product.name,
+    unit_price_cop: product.priceCop,
+    quantity: 1,
+    line_total_cop: product.priceCop,
+  });
+  if (itemError) throw itemError;
+  return { id: order.id as string, number: order.number as number };
+}

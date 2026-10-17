@@ -77,7 +77,7 @@ const FIELDS: {
   {
     name: "booking_hold_minutes",
     label: "Tiempo para pagar",
-    hint: "Minutos que se aparta el horario mientras la clienta paga.",
+    hint: "Minutos que se aparta el horario (o las unidades de un pedido de la tienda) mientras la clienta paga.",
     min: 5,
     max: 30,
     step: 1,
@@ -100,6 +100,15 @@ const FIELDS: {
     max: 365,
     step: 1,
     unit: "días",
+  },
+  {
+    name: "shipping_fee_cop",
+    label: "Tarifa de envío de la tienda",
+    hint: "Valor fijo que se suma a los pedidos con envío a domicilio. Pon 0 para envío gratis.",
+    min: 0,
+    max: 1000000,
+    step: 500,
+    unit: "pesos",
   },
   {
     name: "preorder_deposit_percent",

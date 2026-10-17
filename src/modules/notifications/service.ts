@@ -7,6 +7,7 @@ import { addDays, toZonedDateString, zonedDateTimeToUtc } from "@/lib/time";
 import {
   appointmentConfirmedEmail,
   appointmentReminderEmail,
+  orderPaidEmail,
   type AppointmentEmailData,
 } from "./emails";
 
@@ -70,6 +71,55 @@ export async function sendConfirmationEmail(appointmentId: string): Promise<void
     if (message) await sendEmail({ to: message.to, ...appointmentConfirmedEmail(message.data) });
   } catch (error) {
     console.error("No se pudo enviar la confirmación de la cita", error);
+  }
+}
+
+/**
+ * Confirmación del pago de un pedido de la tienda (una sola vez, igual que las
+ * citas: se reserva con confirmation_sent_at). Nunca lanza errores.
+ */
+export async function sendOrderConfirmationEmail(orderId: string): Promise<void> {
+  try {
+    const supabase = createAdminClient();
+    const { data: order } = await supabase
+      .from("orders")
+      .update({ confirmation_sent_at: new Date().toISOString() })
+      .eq("id", orderId)
+      .eq("status", "paid")
+      .is("confirmation_sent_at", null)
+      .select(
+        "id, number, customer_id, delivery_method, address, city, subtotal_cop, shipping_cop, total_cop, order_items(product_name, quantity, line_total_cop)",
+      )
+      .maybeSingle();
+    if (!order) return;
+    const [{ data: user }, { data: profile }] = await Promise.all([
+      supabase.auth.admin.getUserById(order.customer_id),
+      supabase.from("profiles").select("full_name").eq("id", order.customer_id).maybeSingle(),
+    ]);
+    const to = user.user?.email;
+    if (!to) return;
+    await sendEmail({
+      to,
+      ...orderPaidEmail({
+        businessName: siteConfig.name,
+        customerName: profile?.full_name ?? null,
+        orderNumber: order.number,
+        items: order.order_items.map((item) => ({
+          name: item.product_name,
+          quantity: item.quantity,
+          lineTotalCop: item.line_total_cop,
+        })),
+        subtotalCop: order.subtotal_cop,
+        shippingCop: order.shipping_cop,
+        totalCop: order.total_cop,
+        delivery: order.delivery_method,
+        address: order.address ? `${order.address}, ${order.city ?? ""}`.replace(/, $/, "") : null,
+        orderUrl: `${siteConfig.url}/pedidos/${order.id}`,
+        whatsappNumber: siteConfig.whatsappNumber,
+      }),
+    });
+  } catch (error) {
+    console.error("No se pudo enviar la confirmación del pedido", error);
   }
 }
 

@@ -45,6 +45,7 @@ export default async function BusinessRulesPage() {
             booking_hold_minutes: current.booking_hold_minutes,
             min_booking_notice_hours: current.min_booking_notice_hours,
             max_booking_days_ahead: current.max_booking_days_ahead,
+            shipping_fee_cop: current.shipping_fee_cop,
           }}
         />
       </section>

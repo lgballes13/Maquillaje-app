@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { siteConfig } from "@/config/site";
 import { getCurrentUser, isAdminUser } from "@/modules/auth/session";
+import { CartLink } from "@/modules/shop/components/cart-link";
 
 const linkClass =
   "inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none";
@@ -19,10 +20,15 @@ export async function SiteHeader() {
           {siteConfig.name}
         </Link>
         <nav aria-label="Principal">
-          <ul className="flex items-center gap-1">
+          <ul className="flex flex-wrap items-center gap-1">
             <li>
               <Link href="/agendar" className={linkClass}>
                 Agendar
+              </Link>
+            </li>
+            <li>
+              <Link href="/tienda" className={linkClass}>
+                Tienda
               </Link>
             </li>
             {isAdmin ? (
@@ -42,6 +48,9 @@ export async function SiteHeader() {
                   Ingresar
                 </Link>
               )}
+            </li>
+            <li>
+              <CartLink className={linkClass} />
             </li>
           </ul>
         </nav>

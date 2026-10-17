@@ -19,6 +19,10 @@ export const RATE_LIMITS = {
   "booking:user": { limit: 10, windowSeconds: 60 * 60 },
   // Cancelar y cambiar de horario.
   "appointment:user": { limit: 20, windowSeconds: 60 * 60 },
+  // Tienda: crear y cancelar pedidos (cada pedido aparta unidades).
+  "order:user": { limit: 20, windowSeconds: 60 * 60 },
+  // Panel: subir fotos de productos.
+  "upload:user": { limit: 60, windowSeconds: 60 * 60 },
 } as const;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

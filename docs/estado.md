@@ -4,7 +4,7 @@
 > una conversación nueva: léelo primero.
 
 **Última actualización:** 2026-10-17
-**Fase actual:** 3 · Ciclo de la cita (terminada, pendiente de tu revisión y merge del PR)
+**Fase actual:** 4 · Tienda (terminada, pendiente de tu revisión y merge del PR)
 
 ## Plan de fases
 
@@ -14,7 +14,7 @@
 | 1    | Datos y acceso: migraciones Supabase, RLS, login, admin con 2FA, reglas configurables, auditoría, seed   | ✅ Terminada |
 | 2    | Citas y pagos: servicios, disponibilidad, hold de 10 min, anti-solapamiento, política, anticipo, webhook | ✅ Terminada |
 | 3    | Ciclo de la cita: asistió/no asistió, reprogramar, cancelar, penalidades, recordatorios                  | ✅ Terminada |
-| 4    | Tienda: catálogo, búsqueda, carrito, checkout, stock atómico, pedidos                                    | ⏳ Pendiente |
+| 4    | Tienda: catálogo, búsqueda, carrito, checkout, stock atómico, pedidos                                    | ✅ Terminada |
 | 5    | Preventa y lista de espera                                                                               | ⏳ Pendiente |
 | 6    | Portafolio con autorización de fotos                                                                     | ⏳ Pendiente |
 | 7    | Panel admin completo: agenda, gestión, reportes, CSV                                                     | ⏳ Pendiente |
@@ -92,6 +92,26 @@ La Fase 2 se fusionó a `main` el 2026-10-17 (PR #9).
   configurable en el panel, DT-026). Se usa primero el que vence antes; «Mi cuenta» y la
   pantalla de cancelar muestran la fecha. Pruebas: 139 unitarias y 130 de base de datos.
 
+## Hecho en la Fase 4
+
+- Entrega decidida: recoger en el estudio (sin costo) o envío con tarifa fija configurable en el
+  panel (hoy $15.000 provisional, DT-029).
+- Migración `20261017000800_tienda.sql`: categorías, productos (precio con IVA, stock), fotos
+  (bucket público `productos`), pedidos, productos del pedido y pagos del pedido. Funciones
+  `create_order` (aparta las unidades bloqueando el stock), `prepare_order_payment`,
+  `apply_order_payment_event` (solo servidor), `cancel_my_order`, `set_order_status` y
+  `mark_order_reviewed` (DT-027, DT-028).
+- Páginas: `/tienda` (búsqueda y categorías), `/tienda/[producto]`, `/carrito` (precios del
+  servidor, entrega, total antes de pagar e información de retracto), `/pedidos/[id]` (pago con
+  Wompi y cancelar), `/cuenta/pedidos`. El encabezado tiene «Tienda» y el carrito con contador.
+- Panel: `/admin/productos` (crear y editar, categorías, fotos) y `/admin/pedidos` (filtros,
+  listo / enviado / entregado / cancelar, pedidos por revisar). Tarifa de envío en
+  `/admin/reglas`.
+- Correo «Recibimos el pago de tu pedido».
+- Productos de ejemplo en el seed: labial $45.000, base $89.000 y set de brochas $120.000.
+- Pruebas: 178 unitarias, 177 de base de datos (pgTAP) y 43 E2E por navegador (5 nuevas de la
+  tienda).
+
 ## Para activar pagos reales (cuando quieras)
 
 1. Crea tu cuenta en <https://comercios.wompi.co> y entra en modo **Pruebas**.
@@ -113,7 +133,9 @@ La Fase 2 se fusionó a `main` el 2026-10-17 (PR #9).
 - [x] Pasarela de pago: Wompi
 - [ ] Valores iniciales de la política de anticipo (%, horas para reprogramar, % de pérdida, horas para cancelar gratis)
 - [x] Canales de notificación: correo con Resend (WhatsApp automático queda fuera por ahora)
-- [ ] Opciones de envío
+- [x] Opciones de envío: recoger en el estudio o envío con tarifa fija
+- [ ] Tarifa de envío real (hoy $15.000 provisional) y dirección del estudio para recoger
+- [ ] Productos reales: nombres, precios con IVA, fotos y unidades
 - [ ] Preventa: % de anticipo y días estimados de entrega
 - [ ] Número de WhatsApp
 - [ ] ¿Una sola maquilladora al inicio? (la Fase 2 asume que sí: una sola agenda)
@@ -151,5 +173,10 @@ La Fase 2 se fusionó a `main` el 2026-10-17 (PR #9).
 - Al reprogramar se usa el precio y el % de anticipo vigentes (DT-024): si cambiaron, la clienta
   paga la diferencia o le sobra saldo.
 - El saldo a favor vence a los 15 días y no se devuelve en dinero desde la app.
+- Tienda: el texto de retracto y garantía del carrito es un borrador. Falta revisión legal,
+  sobre todo las excepciones del retracto para productos de uso personal (Ley 1480, art. 47).
+- Tienda: las devoluciones de dinero (pedido pagado y cancelado, pago tardío sin stock) se hacen
+  a mano en Wompi; el pedido queda «por revisar» en el panel.
+- Tienda: no hay correo cuando el pedido está listo o enviado; la clienta lo ve en «Mis pedidos».
 - Las citas vencidas se marcan cuando alguien hace una reserva nueva; mientras tanto se ven como
   vencidas en pantalla. No hace falta un proceso programado.

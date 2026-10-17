@@ -19,6 +19,7 @@ const rulesForm = {
   booking_hold_minutes: "10",
   min_booking_notice_hours: "12",
   max_booking_days_ahead: "90",
+  shipping_fee_cop: "15000",
   change_reason: "Ajuste de temporada",
 };
 

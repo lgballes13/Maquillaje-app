@@ -2,7 +2,7 @@ import "server-only";
 import { publicEnv } from "@/lib/env";
 import { getWompiSecrets } from "@/lib/env.server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendConfirmationEmail } from "@/modules/notifications/service";
+import { sendConfirmationEmail, sendOrderConfirmationEmail } from "@/modules/notifications/service";
 import { eventKey, wompiMode, type WompiMode, type WompiTransaction } from "./wompi";
 
 export interface WompiConfig {
@@ -34,16 +34,20 @@ export function getWompiConfig(): WompiConfig | null {
   };
 }
 
+/** Referencias de pago: CITA-… para anticipos de citas y PED-… para pedidos de la tienda. */
+export const ORDER_REFERENCE_PREFIX = "PED-";
+
 /**
  * Aplica el estado de una transacción YA VERIFICADA (firma del webhook o
- * consulta directa a Wompi). La base de datos decide qué hacer con la cita.
+ * consulta directa a Wompi). La base de datos decide qué hacer con la cita
+ * o con el pedido.
  */
 export async function applyWompiTransaction(
   source: "webhook" | "api",
   transaction: WompiTransaction,
 ): Promise<string> {
   const supabase = createAdminClient();
-  const { data, error } = await supabase.rpc("apply_payment_event", {
+  const args = {
     p_source: source,
     p_event_key: eventKey(transaction),
     p_reference: transaction.reference,
@@ -52,7 +56,23 @@ export async function applyWompiTransaction(
     p_amount_in_cents: transaction.amount_in_cents,
     p_currency: transaction.currency,
     p_payment_method: transaction.payment_method_type ?? undefined,
-  });
+  };
+
+  if (transaction.reference.startsWith(ORDER_REFERENCE_PREFIX)) {
+    const { data, error } = await supabase.rpc("apply_order_payment_event", args);
+    if (error) throw new Error(`No se pudo aplicar el pago del pedido: ${error.message}`);
+    if (data === "paid" || data === "paid_late") {
+      const { data: payment } = await supabase
+        .from("order_payments")
+        .select("order_id")
+        .eq("reference", transaction.reference)
+        .maybeSingle();
+      if (payment) await sendOrderConfirmationEmail(payment.order_id);
+    }
+    return data;
+  }
+
+  const { data, error } = await supabase.rpc("apply_payment_event", args);
   if (error) throw new Error(`No se pudo aplicar el pago: ${error.message}`);
 
   if (data === "confirmed" || data === "confirmed_late") {
