@@ -37,7 +37,7 @@ export default async function AdminAgendaPage({ searchParams }: PageProps<"/admi
     (sum, d) => sum + d.entries.filter((e) => e.kind === "appointment").length,
     0,
   );
-  const unit = range.view === "dia" ? "día" : "semana";
+  const unit = range.view === "dia" ? "este día" : "esta semana";
 
   return (
     <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
@@ -116,7 +116,7 @@ export default async function AdminAgendaPage({ searchParams }: PageProps<"/admi
           className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary underline underline-offset-4"
         >
           <Download aria-hidden="true" className="size-4" />
-          Descargar las citas de este {unit} (CSV)
+          Descargar las citas de {unit} (CSV)
         </a>
       </div>
 
