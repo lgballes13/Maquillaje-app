@@ -5,8 +5,13 @@ import { expect } from "../fixtures";
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 
 export async function expectNoA11yViolations(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
-  expect(results.violations).toEqual([]);
+  // Next transmite el <title> después del contenido: justo tras una navegación o
+  // una server action puede faltar un instante. Se reintenta; un fallo real persiste.
+  await expect
+    .poll(async () => (await new AxeBuilder({ page }).withTags(WCAG).analyze()).violations, {
+      timeout: 10_000,
+    })
+    .toEqual([]);
 }
 
 export function bogotaToday(): string {
