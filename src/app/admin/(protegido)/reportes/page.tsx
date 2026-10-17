@@ -6,6 +6,7 @@ import { toZonedDateString } from "@/lib/time";
 import { getReport } from "@/modules/admin/queries";
 import { attendanceRate, resolveReportRange, totalIncome } from "@/modules/admin/reports";
 import { APPOINTMENT_STATUS_LABELS, formatCop } from "@/modules/booking/policy";
+import { requireAdmin } from "@/modules/auth/session";
 
 export const metadata: Metadata = { title: "Reportes" };
 
@@ -13,6 +14,8 @@ const inputClass =
   "min-h-11 rounded-md border border-input bg-card px-3 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50";
 
 export default async function AdminReportsPage({ searchParams }: PageProps<"/admin/reportes">) {
+  // El layout también lo revisa, pero corre en paralelo con la página.
+  await requireAdmin("/admin/reportes");
   const today = toZonedDateString(new Date(), siteConfig.timeZone);
   const range = resolveReportRange(await searchParams, today);
   const report = await getReport(range.from, range.to);

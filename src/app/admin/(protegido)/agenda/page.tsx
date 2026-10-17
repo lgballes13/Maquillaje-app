@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { resolveAgendaRange, type AgendaEntry, type AgendaView } from "@/modules/admin/agenda";
 import { getAgenda } from "@/modules/admin/queries";
 import { APPOINTMENT_STATUS_LABELS } from "@/modules/booking/policy";
+import { requireAdmin } from "@/modules/auth/session";
 
 export const metadata: Metadata = { title: "Agenda" };
 
@@ -25,6 +26,8 @@ function agendaHref(view: AgendaView, date: string) {
 }
 
 export default async function AdminAgendaPage({ searchParams }: PageProps<"/admin/agenda">) {
+  // El layout también lo revisa, pero corre en paralelo con la página.
+  await requireAdmin("/admin/agenda");
   const today = toZonedDateString(new Date(), siteConfig.timeZone);
   const range = resolveAgendaRange(await searchParams, today);
   const { days, profiles } = await getAgenda(range.days);
@@ -124,10 +127,10 @@ export default async function AdminAgendaPage({ searchParams }: PageProps<"/admi
             aria-labelledby={`dia-${day.date}`}
             className="rounded-xl border border-border bg-card p-4"
           >
-            <h2 id={`dia-${day.date}`} className="font-semibold capitalize">
+            <h2 id={`dia-${day.date}`} className="font-semibold first-letter:uppercase">
               {formatLongDate(day.date)}
               {day.date === today ? (
-                <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground normal-case">
+                <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
                   Hoy
                 </span>
               ) : null}

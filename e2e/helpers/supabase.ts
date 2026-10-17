@@ -182,10 +182,12 @@ export async function insertPaidOrder({
   customerId,
   product,
   recipientName,
+  quantity = 1,
 }: {
   customerId: string;
   product: { id: string; name: string; priceCop: number };
   recipientName: string;
+  quantity?: number;
 }) {
   const supabase = adminClient();
   const { version } = await currentRules();
@@ -198,9 +200,9 @@ export async function insertPaidOrder({
       recipient_name: recipientName,
       phone: "3001234567",
       rules_version: version,
-      subtotal_cop: product.priceCop,
+      subtotal_cop: product.priceCop * quantity,
       shipping_cop: 0,
-      total_cop: product.priceCop,
+      total_cop: product.priceCop * quantity,
       paid_at: new Date().toISOString(),
     })
     .select("id, number")
@@ -211,8 +213,8 @@ export async function insertPaidOrder({
     product_id: product.id,
     product_name: product.name,
     unit_price_cop: product.priceCop,
-    quantity: 1,
-    line_total_cop: product.priceCop,
+    quantity,
+    line_total_cop: product.priceCop * quantity,
   });
   if (itemError) throw itemError;
   return { id: order.id as string, number: order.number as number };

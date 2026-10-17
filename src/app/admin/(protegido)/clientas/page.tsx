@@ -4,10 +4,13 @@ import { Download, Search } from "lucide-react";
 import { resolveCustomerSearch } from "@/modules/admin/customers";
 import { getCustomers } from "@/modules/admin/queries";
 import { formatCop } from "@/modules/booking/policy";
+import { requireAdmin } from "@/modules/auth/session";
 
 export const metadata: Metadata = { title: "Clientas" };
 
 export default async function AdminCustomersPage({ searchParams }: PageProps<"/admin/clientas">) {
+  // El layout también lo revisa, pero corre en paralelo con la página.
+  await requireAdmin("/admin/clientas");
   const search = resolveCustomerSearch((await searchParams).q);
   const customers = await getCustomers(search);
   const exportHref = search
