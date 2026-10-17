@@ -11,6 +11,7 @@ import {
   formatCop,
 } from "@/modules/booking/policy";
 import { ORDER_STATUS_LABELS } from "@/modules/shop/labels";
+import { requireAdmin } from "@/modules/auth/session";
 
 export const metadata: Metadata = { title: "Ficha de la clienta" };
 
@@ -18,6 +19,8 @@ export default async function AdminCustomerPage({
   params,
 }: PageProps<"/admin/clientas/[clientaId]">) {
   const { clientaId } = await params;
+  // El layout también lo revisa, pero corre en paralelo con la página.
+  await requireAdmin(`/admin/clientas/${clientaId}`);
   if (!z.uuid().safeParse(clientaId).success) notFound();
   const data = await getCustomer(clientaId);
   if (!data) notFound();

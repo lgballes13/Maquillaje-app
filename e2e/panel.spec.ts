@@ -34,7 +34,15 @@ test.describe("Panel de administración", () => {
       jitterHours: 24 * 8,
     });
     const product = await createTestProduct({ name: `Sombra Panel ${suffix}` });
-    await insertPaidOrder({ customerId: customer.id, product, recipientName: name });
+    // Muchas unidades para que quede entre los 10 más vendidos aunque otras pruebas vendan hoy.
+    for (let i = 0; i < 2; i++) {
+      await insertPaidOrder({
+        customerId: customer.id,
+        product,
+        recipientName: name,
+        quantity: 10,
+      });
+    }
 
     const admin = await createTestUser({ admin: true });
     await login(page, admin.email, admin.password);
@@ -56,16 +64,17 @@ test.describe("Panel de administración", () => {
       "page",
     );
     await expect(page.locator("main section")).toHaveCount(7);
-    await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
+    // Una cita que pasa la medianoche sale en los dos días: basta con la primera.
+    await expect(page.getByRole("link", { name, exact: true }).first()).toBeVisible();
     await expectNoA11yViolations(page);
 
     // 2. Ficha de la clienta con nota interna.
-    await page.getByRole("link", { name, exact: true }).click();
+    await page.getByRole("link", { name, exact: true }).first().click();
     await expect(page.getByRole("heading", { name, level: 1 })).toBeVisible();
     await expect(page.getByRole("link", { name: customer.email })).toBeVisible();
     const summary = page.getByTestId("customer-summary");
     await expect(summary).toContainText("Citas1");
-    await expect(summary).toContainText("Pedidos1");
+    await expect(summary).toContainText("Pedidos2");
     await page
       .getByRole("textbox", { name: /Nota interna/ })
       .fill("Piel sensible, prefiere tonos cálidos");
@@ -124,7 +133,7 @@ test.describe("Panel de administración", () => {
     const ordersCsv = await page.request.get(
       `/admin/exportar/pedidos?desde=${today}&hasta=${today}`,
     );
-    expect(await ordersCsv.text()).toContain(`1 × ${product.name}`);
+    expect(await ordersCsv.text()).toContain(`10 × ${product.name}`);
 
     // Rango inválido: aviso y se muestra el mes actual.
     await page.goto(`/admin/reportes?desde=${today}&hasta=2020-01-01`);
