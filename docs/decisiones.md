@@ -422,3 +422,38 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
 - La comparación no usa un deslizador (la CSP con nonce no permite estilos en línea, DT-004): en
   celular se cambia entre «Antes» y «Después» con dos botones accesibles; en pantallas anchas se
   ven lado a lado.
+
+## DT-036 · Clientas y reportes desde funciones de admin
+
+**Fecha:** 2026-10-17 · **Estado:** vigente
+
+- El correo de la clienta vive en `auth.users`, que la app no lee directo. `admin_customers`
+  (security definer) lo junta con el perfil y los totales (citas, asistencia, pedidos, saldo), y
+  solo responde a una admin con 2FA. No incluye cuentas del equipo.
+- La búsqueda trata `%` y `_` como texto, para que nadie traiga toda la lista con un comodín.
+- `admin_report` calcula todo en la base con fechas en hora de Bogotá (las dos incluidas) y un
+  máximo de un año por consulta. Los ingresos son los pagos aprobados en Wompi en ese rango.
+- La nota interna (`customer_notes`) es solo para la admin y queda en la auditoría.
+
+## DT-037 · Descargas CSV
+
+**Fecha:** 2026-10-17 · **Estado:** vigente (decisión de la dueña: el CSV de clientas lleva correo y teléfono)
+
+- Separador «;» y BOM UTF-8, para que Excel en español los abra con tildes y en columnas.
+- Una celda que empieza por `=`, `+`, `-`, `@`, tabulador o salto se antepone con «'» para que la
+  hoja de cálculo no la ejecute como fórmula (inyección CSV). Por eso un teléfono `+57…` se ve
+  como `'+57…`.
+- Cada descarga se registra con `log_admin_export` (acción `EXPORT`, quién, qué y cuántas filas);
+  si no se puede registrar, el archivo no se entrega. Respuesta con `Cache-Control: no-store`.
+- Máximo 5.000 filas por archivo.
+
+## DT-038 · Agenda por día y semana
+
+**Fecha:** 2026-10-17 · **Estado:** vigente
+
+- Lista por día (no una cuadrícula de horas): se lee bien en un celular de 360 px y con lector de
+  pantalla. La semana va de lunes a domingo; en pantallas anchas se ven dos días por fila.
+- Muestra citas pendientes de pago, confirmadas y ya marcadas; no las canceladas, vencidas ni
+  reprogramadas. Las horas libres son los huecos de 30 minutos o más dentro del horario de
+  atención.
+- `/admin/citas` sigue para el día a día: marcar asistencia, pagos por revisar y bloqueos.
