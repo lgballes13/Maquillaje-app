@@ -96,7 +96,8 @@ src/
   components/     Componentes de React. ui/ = base de shadcn/ui; forms/ = campos de formulario
   config/         Configuración general del sitio y versión de la política de datos
   lib/            Lógica reutilizable (entorno, seguridad, Supabase, formularios)
-  modules/        Lógica por dominio: auth/ (cuentas y 2FA), admin/ (reglas del negocio),
+  modules/        Lógica por dominio: auth/ (cuentas y 2FA), admin/ (reglas, agenda, clientas,
+                  reportes y CSV),
                   booking/ (citas), payments/ (Wompi), notifications/ (correos), shop/ (tienda),
                   portfolio/ (portafolio y autorizaciones)
   proxy.ts        Se ejecuta antes de cada página (CSP con nonce + renovar la sesión)

@@ -252,3 +252,21 @@ export async function giveCredit(customerId: string, amountCop: number) {
     });
   if (error) throw error;
 }
+
+/** Teléfono del perfil de una clienta (el registro no lo pide). */
+export async function setProfilePhone(customerId: string, phone: string) {
+  const { error } = await adminClient().from("profiles").update({ phone }).eq("id", customerId);
+  if (error) throw error;
+}
+
+/** Descargas CSV que la admin dejó registradas en la auditoría. */
+export async function exportAuditRows(actorId: string) {
+  const { data, error } = await adminClient()
+    .from("audit_log")
+    .select("record_id, new_data")
+    .eq("action", "EXPORT")
+    .eq("actor_id", actorId)
+    .order("id");
+  if (error) throw error;
+  return data as { record_id: string; new_data: Record<string, unknown> }[];
+}

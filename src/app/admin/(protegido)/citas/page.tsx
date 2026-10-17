@@ -12,8 +12,8 @@ import { APPOINTMENT_STATUS_LABELS, formatCop } from "@/modules/booking/policy";
 export const metadata: Metadata = { title: "Citas" };
 
 /*
- * Lista básica de citas próximas y bloqueos de agenda.
- * La agenda completa (calendario, filtros, cambios de estado) llega en la Fase 7.
+ * Lo del día a día: asistencia por marcar, pagos por revisar, próximas citas y
+ * bloqueos. La vista por día o semana está en /admin/agenda.
  */
 function hoursAgoIso(hours: number): string {
   return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();

@@ -352,6 +352,36 @@ export type Database = {
           },
         ];
       };
+      customer_notes: {
+        Row: {
+          customer_id: string;
+          note: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          customer_id: string;
+          note: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          customer_id?: string;
+          note?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "customer_notes_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       order_items: {
         Row: {
           id: number;
@@ -1090,6 +1120,23 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      admin_customers: {
+        Args: { p_customer_id?: string; p_limit?: number; p_search?: string };
+        Returns: {
+          appointments_count: number;
+          completed_count: number;
+          created_at: string;
+          credit_cop: number;
+          email: string;
+          full_name: string;
+          id: string;
+          marketing_opt_in: boolean;
+          no_show_count: number;
+          orders_count: number;
+          phone: string;
+        }[];
+      };
+      admin_report: { Args: { p_from: string; p_to: string }; Returns: Json };
       apply_order_payment_event: {
         Args: {
           p_amount_in_cents: number;
@@ -1176,6 +1223,7 @@ export type Database = {
       };
       has_role: { Args: { p_role: Database["public"]["Enums"]["app_role"] }; Returns: boolean };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      log_admin_export: { Args: { p_detail?: Json; p_kind: string }; Returns: undefined };
       mark_attendance: {
         Args: { p_appointment_id: string; p_attended: boolean };
         Returns: undefined;

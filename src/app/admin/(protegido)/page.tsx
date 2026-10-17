@@ -1,12 +1,40 @@
 import Link from "next/link";
-import { CalendarDays, Images, Package, Scissors, Settings2, ShoppingBag } from "lucide-react";
+import {
+  CalendarDays,
+  CalendarRange,
+  ChartColumn,
+  Images,
+  Package,
+  Scissors,
+  Settings2,
+  ShoppingBag,
+  Users,
+} from "lucide-react";
 
 const LINKS = [
   {
+    href: "/admin/agenda",
+    title: "Agenda",
+    description: "Citas, bloqueos y horas libres por día o por semana.",
+    icon: CalendarRange,
+  },
+  {
     href: "/admin/citas",
     title: "Citas",
-    description: "Próximas citas, pagos por revisar y bloqueos de agenda.",
+    description: "Asistencia por marcar, pagos por revisar y bloqueos de agenda.",
     icon: CalendarDays,
+  },
+  {
+    href: "/admin/clientas",
+    title: "Clientas",
+    description: "Buscar clientas y ver su ficha: citas, pedidos, saldo y nota interna.",
+    icon: Users,
+  },
+  {
+    href: "/admin/reportes",
+    title: "Reportes",
+    description: "Ingresos, citas, asistencia y productos más vendidos; descargas en CSV.",
+    icon: ChartColumn,
   },
   {
     href: "/admin/servicios",
@@ -44,9 +72,6 @@ export default function AdminHomePage() {
   return (
     <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
       <h1 className="text-2xl font-bold tracking-tight">Panel de administración</h1>
-      <p className="mt-2 text-muted-foreground">
-        La agenda completa, los clientes y los reportes llegan en la próxima fase.
-      </p>
       <ul className="mt-6 grid gap-4 sm:grid-cols-2">
         {LINKS.map(({ href, title, description, icon: Icon }) => (
           <li key={href}>

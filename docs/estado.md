@@ -4,7 +4,7 @@
 > una conversación nueva: léelo primero.
 
 **Última actualización:** 2026-10-17
-**Fase actual:** 6 · Portafolio (terminada, pendiente de tu revisión y merge del PR)
+**Fase actual:** 7 · Panel de administración completo (terminada, pendiente de tu revisión y merge del PR)
 
 ## Plan de fases
 
@@ -17,7 +17,7 @@
 | 4    | Tienda: catálogo, búsqueda, carrito, checkout, stock atómico, pedidos                                    | ✅ Terminada |
 | 5    | Preventa y lista de espera                                                                               | ✅ Terminada |
 | 6    | Portafolio con autorización de fotos                                                                     | ✅ Terminada |
-| 7    | Panel admin completo: agenda, gestión, reportes, CSV                                                     | ⏳ Pendiente |
+| 7    | Panel admin completo: agenda, gestión, reportes, CSV                                                     | ✅ Terminada |
 | 8    | Legal (Ley 1581 y 1480), SEO, Lighthouse ≥ 90, respaldos, despliegue                                     | ⏳ Pendiente |
 
 ## Hecho en la Fase 0
@@ -149,6 +149,20 @@ La Fase 5 se fusionó a `main` el 2026-10-17 (PR #13).
   fotos de antes y después, publicar u ocultar, y categorías.
 - Pruebas: 202 unitarias, 256 de base de datos (pgTAP) y 50 E2E por navegador (2 nuevas).
 
+## Hecho en la Fase 7
+
+- Decisiones: clientas y reportes desde funciones de admin (DT-036), descargas CSV con auditoría
+  y protección contra fórmulas (DT-037) y agenda por día y semana (DT-038).
+- Migración `20261017001200_panel_admin.sql`: nota interna por clienta (`customer_notes`, solo
+  admin, con auditoría), `admin_customers` (búsqueda con correo y totales), `admin_report`
+  (números de un rango en hora de Bogotá) y `log_admin_export` (acción `EXPORT` en la auditoría).
+- Panel: `/admin/agenda` (día o semana con citas, bloqueos y horas libres), `/admin/clientas`
+  (búsqueda) y `/admin/clientas/[id]` (ficha con citas, pedidos, saldo y nota interna),
+  `/admin/reportes` (ingresos en línea, citas por estado, asistencia, más vendidos, saldo vigente).
+- Descargas CSV en `/admin/exportar/{citas,pedidos,clientas,reporte}`: el de clientas incluye
+  correo y teléfono (decisión de la dueña). Cada descarga queda en la auditoría.
+- Pruebas: 223 unitarias, 284 de base de datos (pgTAP) y 52 E2E por navegador (2 nuevas).
+
 ## Para activar pagos reales (cuando quieras)
 
 1. Crea tu cuenta en <https://comercios.wompi.co> y entra en modo **Pruebas**.
@@ -162,7 +176,7 @@ La Fase 5 se fusionó a `main` el 2026-10-17 (PR #13).
 
 - **Plazo para reprogramar:** confirmado: horas que tiene la clienta, después de no asistir,
   para reprogramar con el descuento del porcentaje.
-- **Lista de clientes en el panel:** queda para la Fase 7.
+- **Lista de clientes en el panel:** hecha en la Fase 7 (`/admin/clientas`).
 
 ## Datos del negocio pendientes
 
@@ -227,3 +241,8 @@ La Fase 5 se fusionó a `main` el 2026-10-17 (PR #13).
   (no si el stock cambia por otro camino, como una cancelación).
 - Las citas vencidas se marcan cuando alguien hace una reserva nueva; mientras tanto se ven como
   vencidas en pantalla. No hace falta un proceso programado.
+- Reportes: solo cuentan lo pagado en línea (Wompi). El saldo de las citas que se paga en el
+  estudio no se registra en la app.
+- Los CSV tienen datos personales (Ley 1581): quien los descargue debe guardarlos con cuidado y
+  borrarlos cuando ya no los necesite. La app registra quién descargó qué, pero no controla el
+  archivo después.
