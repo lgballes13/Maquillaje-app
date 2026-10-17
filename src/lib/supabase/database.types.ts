@@ -236,6 +236,7 @@ export type Database = {
           change_reason: string | null;
           created_at: string;
           created_by: string | null;
+          credit_validity_days: number;
           deposit_percent: number;
           free_cancellation_hours: number;
           max_booking_days_ahead: number;
@@ -253,6 +254,7 @@ export type Database = {
           change_reason?: string | null;
           created_at?: string;
           created_by?: string | null;
+          credit_validity_days?: number;
           deposit_percent: number;
           free_cancellation_hours: number;
           max_booking_days_ahead: number;
@@ -269,6 +271,7 @@ export type Database = {
           change_reason?: string | null;
           created_at?: string;
           created_by?: string | null;
+          credit_validity_days?: number;
           deposit_percent?: number;
           free_cancellation_hours?: number;
           max_booking_days_ahead?: number;
@@ -288,7 +291,9 @@ export type Database = {
           created_at: string;
           created_by: string | null;
           customer_id: string;
+          expires_at: string | null;
           id: number;
+          lot_id: number | null;
           reason: Database["public"]["Enums"]["credit_reason"];
         };
         ComputedFields: never;
@@ -298,7 +303,9 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           customer_id: string;
+          expires_at?: string | null;
           id?: never;
+          lot_id?: number | null;
           reason: Database["public"]["Enums"]["credit_reason"];
         };
         Update: {
@@ -307,7 +314,9 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           customer_id?: string;
+          expires_at?: string | null;
           id?: never;
+          lot_id?: number | null;
           reason?: Database["public"]["Enums"]["credit_reason"];
         };
         Relationships: [
@@ -316,6 +325,13 @@ export type Database = {
             columns: ["appointment_id"];
             isOneToOne: false;
             referencedRelation: "appointments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "credit_movements_lot_id_fkey";
+            columns: ["lot_id"];
+            isOneToOne: false;
+            referencedRelation: "credit_movements";
             referencedColumns: ["id"];
           },
         ];
@@ -539,6 +555,7 @@ export type Database = {
         };
         Returns: string;
       };
+      expire_credits: { Args: Record<PropertyKey, never>; Returns: number };
       get_busy_periods: {
         Args: { p_from: string; p_to: string };
         Returns: {
@@ -553,6 +570,13 @@ export type Database = {
         Returns: undefined;
       };
       my_credit_balance: { Args: Record<PropertyKey, never>; Returns: number };
+      my_credit_lots: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          expires_at: string;
+          remaining_cop: number;
+        }[];
+      };
       prepare_appointment_payment: {
         Args: { p_appointment_id: string };
         Returns: {
@@ -582,7 +606,8 @@ export type Database = {
         | "reschedule"
         | "no_show_reschedule"
         | "applied_to_booking"
-        | "hold_released";
+        | "hold_released"
+        | "expired";
       payment_status: "pending" | "approved" | "declined" | "voided" | "error";
     };
     CompositeTypes: {
@@ -715,6 +740,7 @@ export const Constants = {
         "no_show_reschedule",
         "applied_to_booking",
         "hold_released",
+        "expired",
       ],
       payment_status: ["pending", "approved", "declined", "voided", "error"],
     },

@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { signOutAction } from "@/modules/auth/actions";
 import { requireUser } from "@/modules/auth/session";
 import { formatCop } from "@/modules/booking/policy";
-import { getMyCreditBalance } from "@/modules/booking/queries";
+import { getMyCreditBalance, getMyCreditLots } from "@/modules/booking/queries";
+import { formatDateTime } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Mi cuenta", robots: { index: false } };
 
@@ -15,13 +16,14 @@ export default async function AccountPage({ searchParams }: PageProps<"/cuenta">
 
   // RLS garantiza que esta consulta solo puede devolver el perfil propio.
   const supabase = await createClient();
-  const [{ data: profile }, credit] = await Promise.all([
+  const [{ data: profile }, credit, lots] = await Promise.all([
     supabase
       .from("profiles")
       .select("full_name, phone, privacy_accepted_at")
       .eq("id", user.id)
       .single(),
     getMyCreditBalance(),
+    getMyCreditLots(),
   ]);
 
   return (
@@ -73,6 +75,15 @@ export default async function AccountPage({ searchParams }: PageProps<"/cuenta">
             </span>
           ) : null}
         </p>
+        {lots.length ? (
+          <ul className="mt-2 grid gap-1 text-sm" data-testid="credit-lots">
+            {lots.map((lot, i) => (
+              <li key={`${lot.expires_at}-${i}`}>
+                {formatCop(lot.remaining_cop)} vence el {formatDateTime(lot.expires_at)}
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <div className="mt-3 flex flex-wrap gap-2">
           <Link href="/cuenta/citas" className={buttonVariants({ variant: "outline" })}>
             Ver mis citas

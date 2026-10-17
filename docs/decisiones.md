@@ -288,3 +288,18 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   antes: el plan gratuito de Vercel solo permite tareas programadas una vez al día. Con el plan
   Pro se puede pasar a cada hora sin cambiar el código de la app.
 - La ruta `/api/cron/recordatorios` exige `CRON_SECRET` (comparación de tiempo constante).
+
+## DT-026 · El saldo a favor vence
+
+**Fecha:** 2026-10-17 · **Estado:** vigente (decisión de la dueña del negocio: 15 días)
+
+- Cada abono de saldo a favor es un «lote» que vence `credit_validity_days` días después de
+  generarse (hoy 15). El valor es una regla más del panel y se toma de la política que la
+  clienta aceptó en la cita que generó el saldo.
+- Al reservar se usa primero el saldo que vence antes.
+- Si una reserva sin pagar se libera, el saldo vuelve a su mismo lote y conserva la fecha de
+  vencimiento original (no se renueva).
+- El saldo vencido deja de contar en el mismo momento en que vence. La tarea diaria (y cada
+  reserva de la clienta) escribe además el movimiento «Vencido», para que el historial cuadre.
+- Caso raro: si un pago tardío necesita saldo que ya se usó o venció, queda una «deuda» negativa
+  y la cita se marca «por revisar».

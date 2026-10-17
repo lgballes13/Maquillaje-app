@@ -88,6 +88,9 @@ La Fase 2 se fusionó a `main` el 2026-10-17 (PR #9).
 - Corregido: los días se veían como «16 De Oct»; ahora «16 de oct».
 - Pruebas: 138 unitarias, 110 de base de datos (pgTAP) y 38 E2E por navegador (5 nuevas del
   ciclo de la cita).
+- Ajuste posterior (aprobado 2026-10-17): el saldo a favor vence a los 15 días (regla
+  configurable en el panel, DT-026). Se usa primero el que vence antes; «Mi cuenta» y la
+  pantalla de cancelar muestran la fecha. Pruebas: 139 unitarias y 130 de base de datos.
 
 ## Para activar pagos reales (cuando quieras)
 
@@ -147,6 +150,6 @@ La Fase 2 se fusionó a `main` el 2026-10-17 (PR #9).
   reprogramar; el plazo corre igual desde la hora de la cita.
 - Al reprogramar se usa el precio y el % de anticipo vigentes (DT-024): si cambiaron, la clienta
   paga la diferencia o le sobra saldo.
-- El saldo a favor no vence ni se devuelve en dinero desde la app.
+- El saldo a favor vence a los 15 días y no se devuelve en dinero desde la app.
 - Las citas vencidas se marcan cuando alguien hace una reserva nueva; mientras tanto se ven como
   vencidas en pantalla. No hace falta un proceso programado.

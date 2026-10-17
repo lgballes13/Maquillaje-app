@@ -10,6 +10,7 @@ export interface PolicyRules {
   reschedule_window_hours: number;
   reschedule_penalty_percent: number | string;
   booking_hold_minutes: number;
+  credit_validity_days: number;
 }
 
 const copFormatter = new Intl.NumberFormat("es-CO", {
@@ -52,6 +53,7 @@ export function policyPoints(rules: PolicyRules): string[] {
       `Puedes cambiar el horario o cancelar sin costo hasta ${rules.free_cancellation_hours} horas antes de la cita. Si cancelas, tu anticipo queda como saldo a favor para tu próxima cita.`,
       `Si cancelas con menos de ${rules.free_cancellation_hours} horas, se descuenta el ${penalty} % del anticipo y el resto queda como saldo a favor.`,
       `Si no asistes, tienes ${rules.reschedule_window_hours} horas desde la hora de la cita para reprogramar: se descuenta el ${penalty} % del anticipo y el resto se abona a la nueva cita. Después de ese plazo pierdes el anticipo.`,
+      `El saldo a favor vence ${rules.credit_validity_days} días después de generarse y solo se usa para el anticipo de otra cita.`,
     );
   }
   return points;
@@ -124,6 +126,15 @@ export interface LifecycleRules {
   free_cancellation_hours: number;
   reschedule_window_hours: number;
   reschedule_penalty_percent: number | string;
+  credit_validity_days: number;
+}
+
+/** Hasta cuándo vale un saldo a favor que se genera ahora (informativo; la base de datos pone la fecha). */
+export function creditExpiresAt(
+  rules: { credit_validity_days: number },
+  now: Date = new Date(),
+): Date {
+  return new Date(now.getTime() + rules.credit_validity_days * 24 * HOUR);
 }
 
 /** Penalidad redondeada hacia arriba al peso (igual que la base de datos). */
@@ -207,4 +218,5 @@ export const CREDIT_REASON_LABELS = {
   no_show_reschedule: "Reprogramación después de no asistir (con descuento)",
   applied_to_booking: "Usado en una reserva",
   hold_released: "Devuelto: reserva sin pagar",
+  expired: "Vencido",
 } as const;

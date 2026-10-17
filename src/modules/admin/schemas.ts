@@ -25,6 +25,7 @@ export const businessRulesSchema = z.object({
   reschedule_window_hours: integer("Plazo para reprogramar", 1, 720),
   reschedule_penalty_percent: percent("Penalidad por reprogramar"),
   free_cancellation_hours: integer("Cancelación sin penalidad", 0, 720),
+  credit_validity_days: integer("Vigencia del saldo a favor", 1, 365),
   preorder_deposit_percent: percent("Anticipo de preventa"),
   preorder_delivery_days: integer("Días de entrega de preventa", 1, 365),
   buffer_minutes: integer("Preparación entre citas", 0, 240),
