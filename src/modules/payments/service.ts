@@ -2,7 +2,11 @@ import "server-only";
 import { publicEnv } from "@/lib/env";
 import { getWompiSecrets } from "@/lib/env.server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendConfirmationEmail, sendOrderConfirmationEmail } from "@/modules/notifications/service";
+import {
+  sendConfirmationEmail,
+  sendOrderConfirmationEmail,
+  sendPreorderDepositEmail,
+} from "@/modules/notifications/service";
 import { eventKey, wompiMode, type WompiMode, type WompiTransaction } from "./wompi";
 
 export interface WompiConfig {
@@ -61,13 +65,18 @@ export async function applyWompiTransaction(
   if (transaction.reference.startsWith(ORDER_REFERENCE_PREFIX)) {
     const { data, error } = await supabase.rpc("apply_order_payment_event", args);
     if (error) throw new Error(`No se pudo aplicar el pago del pedido: ${error.message}`);
-    if (data === "paid" || data === "paid_late") {
+    const deposit = data === "deposit_paid" || data === "deposit_paid_late";
+    if (deposit || data === "paid" || data === "paid_late") {
       const { data: payment } = await supabase
         .from("order_payments")
         .select("order_id")
         .eq("reference", transaction.reference)
         .maybeSingle();
-      if (payment) await sendOrderConfirmationEmail(payment.order_id);
+      if (payment) {
+        await (deposit
+          ? sendPreorderDepositEmail(payment.order_id)
+          : sendOrderConfirmationEmail(payment.order_id));
+      }
     }
     return data;
   }

@@ -26,7 +26,7 @@ function ActionButton({ target }: { target: Target }) {
   );
 }
 
-/** Botones para avanzar un pedido. Cancelar uno pagado pide confirmación. */
+/** Botones para avanzar un pedido. Cancelar pide confirmación. */
 export function OrderStatusForm({ orderId, targets }: { orderId: string; targets: Target[] }) {
   const [state, formAction] = useActionState(setOrderStatusAction, initialFormState);
   if (targets.length === 0) return null;
@@ -39,7 +39,7 @@ export function OrderStatusForm({ orderId, targets }: { orderId: string; targets
         if (
           submitter?.value === "cancelled" &&
           !window.confirm(
-            "¿Cancelar este pedido pagado? Las unidades vuelven al stock y tendrás que devolver el dinero desde Wompi.",
+            "¿Cancelar este pedido? Si ya está pagado, las unidades vuelven al stock; lo pagado (o el anticipo de una preventa) lo devuelves desde Wompi.",
           )
         ) {
           event.preventDefault();

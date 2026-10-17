@@ -18,6 +18,7 @@ export interface ProductFormValues {
   stock: number;
   sort_order: number;
   is_active: boolean;
+  allow_preorder: boolean;
 }
 
 const selectClass =
@@ -121,6 +122,14 @@ export function ProductForm({
         }
       >
         Visible en la tienda
+      </CheckboxField>
+      <CheckboxField
+        name="allow_preorder"
+        defaultChecked={
+          state.values ? state.values.allow_preorder === "on" : (product?.allow_preorder ?? true)
+        }
+      >
+        Si se agota, permitir reservarlo (preventa con anticipo)
       </CheckboxField>
       <SubmitButton pendingText="Guardando…" className="sm:justify-self-start">
         {product?.id ? "Guardar cambios" : "Crear producto"}

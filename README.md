@@ -108,7 +108,8 @@ docs/             Estado del proyecto y decisiones técnicas
 .github/          Integración continua (GitHub Actions) y Dependabot
 ```
 
-En las próximas fases se agregan más módulos en `src/modules/` (preventas, portafolio).
+Las preventas y la lista de espera viven en `shop/` (son pedidos de la tienda). En las próximas
+fases se agregan más módulos en `src/modules/` (portafolio).
 
 ## Variables de entorno
 
@@ -186,7 +187,9 @@ pago y correr las pruebas; el pago real no funciona con ellas. Para probar contr
 ## Correos y recordatorios
 
 La app envía dos correos de citas: la **confirmación** (cuando se paga el anticipo o el saldo a
-favor lo cubre) y el **recordatorio** (el día anterior a las 9 a. m., hora de Colombia).
+favor lo cubre) y el **recordatorio** (el día anterior a las 9 a. m., hora de Colombia). En la
+tienda envía el pago del pedido, la reserva de una preventa, el aviso de «llegó: paga el saldo»
+y el aviso de la lista de espera cuando un producto vuelve.
 
 - **En local** los correos llegan al buzón de pruebas de Supabase (Mailpit):
   <http://127.0.0.1:54324>. Solo necesitas `MAILPIT_URL=http://127.0.0.1:54324` en `.env.local`.
@@ -199,7 +202,8 @@ Si no hay ningún proveedor configurado, la app sigue funcionando y solo deja un
 registro del servidor.
 
 **Recordatorios y saldo vencido (Vercel Cron):** `vercel.json` programa `/api/cron/recordatorios`
-todos los días a las 14:00 UTC (9 a. m. en Colombia). Envía los recordatorios de mañana y deja
+todos los días a las 14:00 UTC (9 a. m. en Colombia). Envía los recordatorios de mañana, cierra
+las preventas que no pagaron el saldo a tiempo (su anticipo pasa a saldo a favor) y deja
 registrado el saldo a favor que ya venció. Para que funcione, agrega en Vercel la variable
 `CRON_SECRET` con un valor largo al azar (`openssl rand -hex 32`); Vercel lo envía solo y la ruta
 rechaza cualquier llamada sin él. Para probarla en local:

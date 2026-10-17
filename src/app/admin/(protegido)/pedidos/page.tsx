@@ -20,6 +20,7 @@ export const metadata: Metadata = { title: "Pedidos" };
 const FILTERS: { key: string; label: string; statuses: OrderStatus[] }[] = [
   { key: "por-preparar", label: "Por preparar", statuses: ["paid"] },
   { key: "por-entregar", label: "Por entregar", statuses: ["ready", "shipped"] },
+  { key: "preventas", label: "Preventas", statuses: ["deposit_paid", "awaiting_balance"] },
   { key: "sin-pagar", label: "Sin pagar", statuses: ["pending_payment"] },
   { key: "cerrados", label: "Cerrados", statuses: ["delivered", "cancelled", "expired"] },
 ];
@@ -36,11 +37,11 @@ export default async function AdminOrdersPage({ searchParams }: PageProps<"/admi
     supabase
       .from("orders")
       .select(
-        "id, number, status, delivery_method, recipient_name, phone, address, city, customer_notes, total_cop, created_at, paid_at, needs_review, review_note, order_items(id, product_name, quantity)",
+        "id, number, kind, status, deposit_cop, credit_applied_cop, deposit_paid_at, balance_due_at, delivery_method, recipient_name, phone, address, city, customer_notes, total_cop, created_at, paid_at, needs_review, review_note, order_items(id, product_name, quantity)",
       )
       .in("status", filter.statuses)
       .order("created_at", {
-        ascending: filter.key === "por-preparar" || filter.key === "por-entregar",
+        ascending: filter.key !== "sin-pagar" && filter.key !== "cerrados",
       })
       .limit(100),
     supabase
@@ -112,7 +113,8 @@ export default async function AdminOrdersPage({ searchParams }: PageProps<"/admi
             <li key={order.id} className="rounded-xl border border-border bg-card p-5">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="font-semibold">
-                  Pedido #{order.number} · {order.recipient_name}
+                  {order.kind === "preorder" ? "Preventa" : "Pedido"} #{order.number} ·{" "}
+                  {order.recipient_name}
                 </h2>
                 <span className="font-semibold">{formatCop(order.total_cop)}</span>
               </div>
@@ -120,6 +122,20 @@ export default async function AdminOrdersPage({ searchParams }: PageProps<"/admi
                 {ORDER_STATUS_LABELS[order.status]} · {DELIVERY_LABELS[order.delivery_method]} ·{" "}
                 {formatDateTime(order.paid_at ?? order.created_at)}
               </p>
+              {order.kind === "preorder" ? (
+                <p className="mt-1 text-sm" data-testid="admin-preorder-amounts">
+                  Anticipo: {formatCop(order.deposit_cop ?? 0)} · Saldo:{" "}
+                  {formatCop(order.total_cop - (order.deposit_cop ?? 0))}
+                  {order.status === "awaiting_balance" && order.balance_due_at
+                    ? ` · Paga hasta el ${formatDateTime(order.balance_due_at)}`
+                    : ""}
+                </p>
+              ) : null}
+              {order.credit_applied_cop > 0 ? (
+                <p className="text-sm">
+                  Saldo a favor usado: {formatCop(order.credit_applied_cop)}
+                </p>
+              ) : null}
               <ul className="mt-2 text-sm">
                 {order.order_items.map((item) => (
                   <li key={item.id}>

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
 import { formatClock, formatDateTime } from "@/lib/format";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { requireUser } from "@/modules/auth/session";
@@ -20,6 +21,7 @@ import { ClearCart } from "@/modules/shop/components/clear-cart";
 import {
   DELIVERY_LABELS,
   displayOrderStatus,
+  isBalanceOverdue,
   ORDER_STATUS_LABELS,
   ORDER_STATUS_STYLES,
   shopErrorMessage,
@@ -66,27 +68,57 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/pe
   if (!order) notFound();
 
   const transactionId = typeof query.id === "string" ? query.id : undefined;
-  if (transactionId && order.paid_at === null) {
+  if (
+    transactionId &&
+    (order.status === "pending_payment" || order.status === "awaiting_balance")
+  ) {
     await reconcileFromRedirect(id, transactionId);
     order = (await getOrder(id)) ?? order;
   }
 
+  // Preventa que no pagó el saldo a tiempo: la base la cierra y pasa el anticipo
+  // a saldo a favor (lo hace también la tarea diaria; aquí se adelanta).
+  if (isBalanceOverdue(order)) {
+    const { error } = await createAdminClient().rpc("expire_orders");
+    if (error) console.error("No se pudieron vencer los pedidos", error.message);
+    order = (await getOrder(id)) ?? order;
+  }
+
   const supabase = await createClient();
-  const { data: lastPayment } = await supabase
-    .from("order_payments")
-    .select("status, provider_transaction_id")
-    .eq("order_id", id)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const isPreorder = order.kind === "preorder";
+  const [{ data: lastPayment }, { data: rules }, { data: forfeit }] = await Promise.all([
+    supabase
+      .from("order_payments")
+      .select("status, provider_transaction_id")
+      .eq("order_id", id)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("business_rules")
+      .select("preorder_delivery_days")
+      .eq("version", order.rules_version)
+      .maybeSingle(),
+    isPreorder && order.status === "cancelled"
+      ? supabase
+          .from("credit_movements")
+          .select("amount_cop")
+          .eq("order_id", id)
+          .eq("reason", "preorder_unpaid")
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
 
   const status = displayOrderStatus(order);
+  const payable = status === "pending_payment" || status === "awaiting_balance";
+  const deposit = order.deposit_cop ?? 0;
   const wompi = getWompiConfig();
   let checkout: Record<string, string> | null = null;
+  let amountCop = 0;
   let paymentError: string | null = null;
   const inProgress =
     lastPayment?.status === "pending" && Boolean(lastPayment.provider_transaction_id);
-  if (status === "pending_payment" && !inProgress) {
+  if (payable && !inProgress) {
     if (!wompi) {
       paymentError = "Los pagos en línea todavía no están activos. Escríbenos por WhatsApp.";
     } else {
@@ -95,6 +127,7 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/pe
       if (error || !attempt) {
         paymentError = shopErrorMessage(error?.message);
       } else {
+        amountCop = Number(attempt.amount_in_cents) / 100;
         checkout = checkoutFields({
           publicKey: wompi.publicKey,
           integritySecret: wompi.integritySecret,
@@ -109,8 +142,7 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/pe
   }
 
   const declined =
-    status === "pending_payment" &&
-    (lastPayment?.status === "declined" || lastPayment?.status === "error");
+    payable && (lastPayment?.status === "declined" || lastPayment?.status === "error");
   const justPaid = Boolean(transactionId) && order.paid_at !== null;
 
   return (
@@ -165,8 +197,51 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/pe
             <dt>Total (IVA incluido)</dt>
             <dd data-testid="order-total">{formatCop(order.total_cop)}</dd>
           </div>
+          {isPreorder ? (
+            <>
+              <div className="flex justify-between gap-2">
+                <dt>Anticipo</dt>
+                <dd data-testid="order-deposit">{formatCop(deposit)}</dd>
+              </div>
+              <div className="flex justify-between gap-2">
+                <dt>Saldo cuando llegue</dt>
+                <dd data-testid="order-balance">{formatCop(order.total_cop - deposit)}</dd>
+              </div>
+            </>
+          ) : null}
+          {order.credit_applied_cop > 0 ? (
+            <div className="flex justify-between gap-2">
+              <dt>Pagado con tu saldo a favor</dt>
+              <dd data-testid="order-credit">{formatCop(order.credit_applied_cop)}</dd>
+            </div>
+          ) : null}
         </dl>
       </section>
+
+      {status === "deposit_paid" ? (
+        <p
+          className="mt-6 rounded-xl border border-border bg-card p-5 text-sm"
+          data-testid="preorder-info"
+        >
+          Tu reserva está confirmada.
+          {rules ? ` Tiempo estimado de llegada: ${rules.preorder_delivery_days} días.` : ""} Te
+          escribimos al correo apenas llegue para que pagues el saldo de{" "}
+          <strong>{formatCop(order.total_cop - deposit)}</strong>.
+        </p>
+      ) : null}
+      {forfeit ? (
+        <p
+          className="mt-6 rounded-xl border border-border bg-card p-5 text-sm"
+          data-testid="preorder-forfeit"
+        >
+          No recibimos el pago del saldo a tiempo, así que liberamos las unidades. Tu anticipo de{" "}
+          <strong>{formatCop(forfeit.amount_cop)}</strong> quedó como saldo a favor: lo ves en{" "}
+          <Link href="/cuenta" className="font-medium text-primary underline underline-offset-4">
+            tu cuenta
+          </Link>
+          .
+        </p>
+      ) : null}
 
       <section
         aria-labelledby="titulo-entrega"
@@ -205,13 +280,17 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/pe
         </dl>
       </section>
 
-      {status === "pending_payment" ? (
+      {payable ? (
         <section
           aria-labelledby="titulo-pago"
           className="mt-6 rounded-xl border border-border bg-card p-5"
         >
           <h2 id="titulo-pago" className="text-lg font-semibold">
-            Paga tu pedido
+            {status === "awaiting_balance"
+              ? "Paga el saldo"
+              : isPreorder
+                ? "Paga el anticipo"
+                : "Paga tu pedido"}
           </h2>
           {declined ? (
             <p role="alert" className="mt-2 text-sm font-medium text-destructive">
@@ -224,11 +303,20 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/pe
               recargarla en unos minutos.
             </p>
           ) : null}
-          {order.hold_expires_at ? (
+          {status === "awaiting_balance" && order.balance_due_at ? (
+            <p className="mt-2 text-sm" data-testid="balance-due">
+              ¡Llegó tu producto! Tienes hasta el{" "}
+              <strong>{formatDateTime(order.balance_due_at)}</strong> para pagar el saldo. Si no lo
+              pagas a tiempo, liberamos las unidades y tu anticipo queda como saldo a favor.
+            </p>
+          ) : null}
+          {status === "pending_payment" && order.hold_expires_at ? (
             <p className="mt-2 text-sm">
-              Tus productos están apartados hasta las{" "}
-              <strong>{formatClock(order.hold_expires_at)}</strong>. Si no pagas a tiempo, se
-              liberan para otra persona.
+              {isPreorder ? "Tu reserva te espera" : "Tus productos están apartados"} hasta las{" "}
+              <strong>{formatClock(order.hold_expires_at)}</strong>.{" "}
+              {isPreorder
+                ? "Si no pagas el anticipo a tiempo, la reserva se cancela."
+                : "Si no pagas a tiempo, se liberan para otra persona."}
             </p>
           ) : null}
 
@@ -244,7 +332,7 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/pe
                 <input key={name} type="hidden" name={name} value={value} />
               ))}
               <Button type="submit" size="lg" className="w-full sm:w-auto">
-                Pagar {formatCop(order.total_cop)} con Wompi
+                Pagar {formatCop(amountCop)} con Wompi
               </Button>
               <p className="mt-2 text-xs text-muted-foreground">
                 Tarjeta, PSE, Nequi y otros medios. Wompi procesa el pago; nosotros no vemos los
@@ -256,11 +344,13 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/pe
               {paymentError}
             </p>
           ) : null}
-          {!inProgress ? <CancelOrderForm orderId={order.id} /> : null}
+          {status === "pending_payment" && !inProgress ? (
+            <CancelOrderForm orderId={order.id} />
+          ) : null}
         </section>
       ) : null}
 
-      {status === "expired" || status === "cancelled" ? (
+      {(status === "expired" || status === "cancelled") && !isPreorder ? (
         <Link href="/carrito" className={buttonVariants({ className: "mt-6" })}>
           Volver al carrito
         </Link>

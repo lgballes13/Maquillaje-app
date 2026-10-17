@@ -137,11 +137,19 @@ export async function createTestProduct({
   name = "Producto de prueba",
   priceCop = 50_000,
   stock = 5,
-}: { name?: string; priceCop?: number; stock?: number } = {}) {
+  allowPreorder = true,
+}: { name?: string; priceCop?: number; stock?: number; allowPreorder?: boolean } = {}) {
   const unique = `${name} ${randomUUID().slice(0, 6)}`;
   const { data, error } = await adminClient()
     .from("products")
-    .insert({ name: unique, price_cop: priceCop, stock, is_active: true, sort_order: 1000 })
+    .insert({
+      name: unique,
+      price_cop: priceCop,
+      stock,
+      is_active: true,
+      sort_order: 1000,
+      allow_preorder: allowPreorder,
+    })
     .select("id, name")
     .single();
   if (error) throw error;
@@ -208,4 +216,39 @@ export async function insertPaidOrder({
   });
   if (itemError) throw itemError;
   return { id: order.id as string, number: order.number as number };
+}
+
+/** Cambia las unidades de un producto directo en la base (simula que llegó mercancía). */
+export async function setProductStock(id: string, stock: number) {
+  const { error } = await adminClient().from("products").update({ stock }).eq("id", id);
+  if (error) throw error;
+}
+
+/** Reglas vigentes de la preventa. */
+export async function preorderRules() {
+  const { data, error } = await adminClient()
+    .from("business_rules")
+    .select("preorder_deposit_percent, preorder_delivery_days, preorder_balance_days")
+    .order("version", { ascending: false })
+    .limit(1)
+    .single();
+  if (error) throw error;
+  return {
+    depositPercent: Number(data.preorder_deposit_percent),
+    deliveryDays: data.preorder_delivery_days as number,
+    balanceDays: data.preorder_balance_days as number,
+  };
+}
+
+/** Le da saldo a favor a una clienta (un lote que vence en 15 días). */
+export async function giveCredit(customerId: string, amountCop: number) {
+  const { error } = await adminClient()
+    .from("credit_movements")
+    .insert({
+      customer_id: customerId,
+      amount_cop: amountCop,
+      reason: "cancellation",
+      expires_at: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+  if (error) throw error;
 }

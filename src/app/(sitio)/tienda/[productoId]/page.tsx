@@ -4,10 +4,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ImageOff } from "lucide-react";
 import { z } from "zod";
+import { buttonVariants } from "@/components/ui/button";
+import { getCurrentUser } from "@/modules/auth/session";
 import { formatCop } from "@/modules/booking/policy";
 import { AddToCart } from "@/modules/shop/components/add-to-cart";
+import { WaitlistForm } from "@/modules/shop/components/waitlist-form";
 import { UNOPTIMIZED_IMAGES } from "@/modules/shop/images";
-import { getProduct } from "@/modules/shop/queries";
+import { getProduct, getShopRules, getWaitlistEntry } from "@/modules/shop/queries";
 
 export async function generateMetadata({
   params,
@@ -26,6 +29,11 @@ export default async function ProductPage({ params }: PageProps<"/tienda/[produc
   const product = await getProduct(productoId);
   if (!product) notFound();
   const [main, ...rest] = product.images;
+  const soldOut = product.available <= 0;
+  const [user, rules] = soldOut
+    ? await Promise.all([getCurrentUser(), getShopRules()])
+    : [null, null];
+  const waitlist = user ? await getWaitlistEntry(product.id, user.id) : null;
 
   return (
     <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
@@ -96,6 +104,56 @@ export default async function ProductPage({ params }: PageProps<"/tienda/[produc
           <div className="mt-6">
             <AddToCart productId={product.id} available={product.available} />
           </div>
+          {soldOut && rules ? (
+            <div className="mt-6 grid gap-6">
+              {product.allowPreorder ? (
+                <section
+                  aria-labelledby="titulo-reservar"
+                  className="rounded-xl border border-border bg-card p-5"
+                  data-testid="preorder-box"
+                >
+                  <h2 id="titulo-reservar" className="text-lg font-semibold">
+                    Resérvalo
+                  </h2>
+                  <p className="mt-2 text-sm">
+                    Pagas el {Number(rules.preorder_deposit_percent)} % ahora y el resto cuando
+                    llegue. Tiempo estimado de llegada: {rules.preorder_delivery_days} días.
+                  </p>
+                  <Link
+                    href={`/tienda/${product.id}/reservar`}
+                    className={buttonVariants({ size: "lg", className: "mt-4 w-full sm:w-auto" })}
+                  >
+                    Reservar
+                  </Link>
+                </section>
+              ) : null}
+              <section
+                aria-labelledby="titulo-aviso"
+                className="rounded-xl border border-border bg-card p-5"
+              >
+                <h2 id="titulo-aviso" className="text-lg font-semibold">
+                  ¿Solo quieres saber cuándo vuelve?
+                </h2>
+                <p className="mt-2 mb-4 text-sm text-muted-foreground">
+                  Te enviamos un correo cuando haya unidades. No pagas nada y no te apartamos el
+                  producto.
+                </p>
+                {user ? (
+                  <WaitlistForm
+                    productId={product.id}
+                    waiting={waitlist !== null && !waitlist.notified}
+                  />
+                ) : (
+                  <Link
+                    href={`/ingresar?next=/tienda/${product.id}`}
+                    className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline underline-offset-4"
+                  >
+                    Ingresa para recibir el aviso
+                  </Link>
+                )}
+              </section>
+            </div>
+          ) : null}
         </div>
       </div>
     </main>

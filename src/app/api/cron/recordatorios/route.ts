@@ -5,8 +5,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendDueReminders } from "@/modules/notifications/service";
 
 /*
- * Tarea programada diaria: envía los recordatorios de las citas de mañana y
- * registra como «vencido» el saldo a favor que ya venció.
+ * Tarea programada diaria: envía los recordatorios de las citas de mañana,
+ * cierra los pedidos vencidos (una preventa sin pagar el saldo a tiempo pasa
+ * su anticipo a saldo a favor) y registra como «vencido» el saldo que ya venció.
  * Vercel Cron la llama todos los días (ver vercel.json) con el encabezado
  * "Authorization: Bearer <CRON_SECRET>". Sin ese secreto responde 401.
  */
@@ -24,9 +25,12 @@ export async function GET(request: Request) {
   }
   try {
     const sent = await sendDueReminders();
-    const { data: expiredCredits, error } = await createAdminClient().rpc("expire_credits");
+    const supabase = createAdminClient();
+    const { data: expiredOrders, error: ordersError } = await supabase.rpc("expire_orders");
+    if (ordersError) throw new Error(`No se pudieron vencer los pedidos: ${ordersError.message}`);
+    const { data: expiredCredits, error } = await supabase.rpc("expire_credits");
     if (error) throw new Error(`No se pudo vencer el saldo a favor: ${error.message}`);
-    return NextResponse.json({ sent, expiredCredits });
+    return NextResponse.json({ sent, expiredOrders, expiredCredits });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "internal_error" }, { status: 500 });

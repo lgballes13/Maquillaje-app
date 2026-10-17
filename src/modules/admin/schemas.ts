@@ -28,6 +28,7 @@ export const businessRulesSchema = z.object({
   credit_validity_days: integer("Vigencia del saldo a favor", 1, 365),
   preorder_deposit_percent: percent("Anticipo de preventa"),
   preorder_delivery_days: integer("Días de entrega de preventa", 1, 365),
+  preorder_balance_days: integer("Plazo para pagar el saldo de preventa", 1, 60),
   buffer_minutes: integer("Preparación entre citas", 0, 240),
   booking_hold_minutes: integer("Tiempo para pagar", 5, 30),
   min_booking_notice_hours: integer("Anticipación mínima", 0, 720),

@@ -241,6 +241,7 @@ export type Database = {
           free_cancellation_hours: number;
           max_booking_days_ahead: number;
           min_booking_notice_hours: number;
+          preorder_balance_days: number;
           preorder_delivery_days: number;
           preorder_deposit_percent: number;
           reschedule_penalty_percent: number;
@@ -260,6 +261,7 @@ export type Database = {
           free_cancellation_hours: number;
           max_booking_days_ahead: number;
           min_booking_notice_hours: number;
+          preorder_balance_days?: number;
           preorder_delivery_days: number;
           preorder_deposit_percent: number;
           reschedule_penalty_percent: number;
@@ -278,6 +280,7 @@ export type Database = {
           free_cancellation_hours?: number;
           max_booking_days_ahead?: number;
           min_booking_notice_hours?: number;
+          preorder_balance_days?: number;
           preorder_delivery_days?: number;
           preorder_deposit_percent?: number;
           reschedule_penalty_percent?: number;
@@ -297,6 +300,7 @@ export type Database = {
           expires_at: string | null;
           id: number;
           lot_id: number | null;
+          order_id: string | null;
           reason: Database["public"]["Enums"]["credit_reason"];
         };
         ComputedFields: never;
@@ -309,6 +313,7 @@ export type Database = {
           expires_at?: string | null;
           id?: never;
           lot_id?: number | null;
+          order_id?: string | null;
           reason: Database["public"]["Enums"]["credit_reason"];
         };
         Update: {
@@ -320,6 +325,7 @@ export type Database = {
           expires_at?: string | null;
           id?: never;
           lot_id?: number | null;
+          order_id?: string | null;
           reason?: Database["public"]["Enums"]["credit_reason"];
         };
         Relationships: [
@@ -335,6 +341,13 @@ export type Database = {
             columns: ["lot_id"];
             isOneToOne: false;
             referencedRelation: "credit_movements";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "credit_movements_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
             referencedColumns: ["id"];
           },
         ];
@@ -397,6 +410,7 @@ export type Database = {
           provider: string;
           provider_transaction_id: string | null;
           reference: string;
+          stage: Database["public"]["Enums"]["payment_stage"];
           status: Database["public"]["Enums"]["payment_status"];
           updated_at: string;
         };
@@ -412,6 +426,7 @@ export type Database = {
           provider?: string;
           provider_transaction_id?: string | null;
           reference: string;
+          stage?: Database["public"]["Enums"]["payment_stage"];
           status?: Database["public"]["Enums"]["payment_status"];
           updated_at?: string;
         };
@@ -426,6 +441,7 @@ export type Database = {
           provider?: string;
           provider_transaction_id?: string | null;
           reference?: string;
+          stage?: Database["public"]["Enums"]["payment_stage"];
           status?: Database["public"]["Enums"]["payment_status"];
           updated_at?: string;
         };
@@ -442,15 +458,23 @@ export type Database = {
       orders: {
         Row: {
           address: string | null;
+          arrival_email_sent_at: string | null;
+          arrived_at: string | null;
+          balance_due_at: string | null;
           cancelled_at: string | null;
           city: string | null;
           confirmation_sent_at: string | null;
           created_at: string;
+          credit_applied_cop: number;
           customer_id: string;
           customer_notes: string | null;
           delivery_method: Database["public"]["Enums"]["delivery_method"];
+          deposit_cop: number | null;
+          deposit_email_sent_at: string | null;
+          deposit_paid_at: string | null;
           hold_expires_at: string | null;
           id: string;
+          kind: Database["public"]["Enums"]["order_kind"];
           needs_review: boolean;
           number: number;
           paid_at: string | null;
@@ -467,15 +491,23 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           address?: string | null;
+          arrival_email_sent_at?: string | null;
+          arrived_at?: string | null;
+          balance_due_at?: string | null;
           cancelled_at?: string | null;
           city?: string | null;
           confirmation_sent_at?: string | null;
           created_at?: string;
+          credit_applied_cop?: number;
           customer_id: string;
           customer_notes?: string | null;
           delivery_method: Database["public"]["Enums"]["delivery_method"];
+          deposit_cop?: number | null;
+          deposit_email_sent_at?: string | null;
+          deposit_paid_at?: string | null;
           hold_expires_at?: string | null;
           id?: string;
+          kind?: Database["public"]["Enums"]["order_kind"];
           needs_review?: boolean;
           number?: never;
           paid_at?: string | null;
@@ -491,15 +523,23 @@ export type Database = {
         };
         Update: {
           address?: string | null;
+          arrival_email_sent_at?: string | null;
+          arrived_at?: string | null;
+          balance_due_at?: string | null;
           cancelled_at?: string | null;
           city?: string | null;
           confirmation_sent_at?: string | null;
           created_at?: string;
+          credit_applied_cop?: number;
           customer_id?: string;
           customer_notes?: string | null;
           delivery_method?: Database["public"]["Enums"]["delivery_method"];
+          deposit_cop?: number | null;
+          deposit_email_sent_at?: string | null;
+          deposit_paid_at?: string | null;
           hold_expires_at?: string | null;
           id?: string;
+          kind?: Database["public"]["Enums"]["order_kind"];
           needs_review?: boolean;
           number?: never;
           paid_at?: string | null;
@@ -684,8 +724,42 @@ export type Database = {
           },
         ];
       };
+      product_waitlist: {
+        Row: {
+          created_at: string;
+          customer_id: string;
+          id: number;
+          notified_at: string | null;
+          product_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          customer_id: string;
+          id?: never;
+          notified_at?: string | null;
+          product_id: string;
+        };
+        Update: {
+          created_at?: string;
+          customer_id?: string;
+          id?: never;
+          notified_at?: string | null;
+          product_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "product_waitlist_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       products: {
         Row: {
+          allow_preorder: boolean;
           category_id: string | null;
           created_at: string;
           description: string | null;
@@ -700,6 +774,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          allow_preorder?: boolean;
           category_id?: string | null;
           created_at?: string;
           description?: string | null;
@@ -713,6 +788,7 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          allow_preorder?: boolean;
           category_id?: string | null;
           created_at?: string;
           description?: string | null;
@@ -890,7 +966,22 @@ export type Database = {
         };
         Returns: string;
       };
+      create_preorder: {
+        Args: {
+          p_address: string;
+          p_city: string;
+          p_customer_notes: string;
+          p_delivery_method: Database["public"]["Enums"]["delivery_method"];
+          p_phone: string;
+          p_product_id: string;
+          p_quantity: number;
+          p_recipient_name: string;
+          p_rules_version: number;
+        };
+        Returns: string;
+      };
       expire_credits: { Args: Record<PropertyKey, never>; Returns: number };
+      expire_orders: { Args: Record<PropertyKey, never>; Returns: number };
       get_busy_periods: {
         Args: { p_from: string; p_to: string };
         Returns: {
@@ -912,6 +1003,10 @@ export type Database = {
         Returns: undefined;
       };
       mark_order_reviewed: { Args: { p_order_id: string }; Returns: undefined };
+      mark_preorder_arrived: {
+        Args: { p_order_id: string };
+        Returns: Database["public"]["Enums"]["order_status"];
+      };
       my_credit_balance: { Args: Record<PropertyKey, never>; Returns: number };
       my_credit_lots: {
         Args: Record<PropertyKey, never>;
@@ -962,10 +1057,22 @@ export type Database = {
         | "no_show_reschedule"
         | "applied_to_booking"
         | "hold_released"
-        | "expired";
+        | "expired"
+        | "applied_to_order"
+        | "preorder_unpaid";
       delivery_method: "pickup" | "shipping";
+      order_kind: "purchase" | "preorder";
       order_status:
-        "pending_payment" | "paid" | "ready" | "shipped" | "delivered" | "cancelled" | "expired";
+        | "pending_payment"
+        | "deposit_paid"
+        | "awaiting_balance"
+        | "paid"
+        | "ready"
+        | "shipped"
+        | "delivered"
+        | "cancelled"
+        | "expired";
+      payment_stage: "full" | "deposit" | "balance";
       payment_status: "pending" | "approved" | "declined" | "voided" | "error";
     };
     CompositeTypes: {
@@ -1099,10 +1206,15 @@ export const Constants = {
         "applied_to_booking",
         "hold_released",
         "expired",
+        "applied_to_order",
+        "preorder_unpaid",
       ],
       delivery_method: ["pickup", "shipping"],
+      order_kind: ["purchase", "preorder"],
       order_status: [
         "pending_payment",
+        "deposit_paid",
+        "awaiting_balance",
         "paid",
         "ready",
         "shipped",
@@ -1110,6 +1222,7 @@ export const Constants = {
         "cancelled",
         "expired",
       ],
+      payment_stage: ["full", "deposit", "balance"],
       payment_status: ["pending", "approved", "declined", "voided", "error"],
     },
   },

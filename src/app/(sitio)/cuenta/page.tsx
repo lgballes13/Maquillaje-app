@@ -71,7 +71,7 @@ export default async function AccountPage({ searchParams }: PageProps<"/cuenta">
           Saldo a favor: <strong data-testid="credit-balance">{formatCop(credit)}</strong>
           {credit > 0 ? (
             <span className="block text-muted-foreground">
-              Se aplica solo al anticipo de tu próxima cita.
+              Se aplica al anticipo de tu próxima cita o a tus compras de la tienda.
             </span>
           ) : null}
         </p>

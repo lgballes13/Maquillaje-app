@@ -15,6 +15,7 @@ const rulesForm = {
   credit_validity_days: "15",
   preorder_deposit_percent: "50",
   preorder_delivery_days: "15",
+  preorder_balance_days: "7",
   buffer_minutes: "15",
   booking_hold_minutes: "10",
   min_booking_notice_hours: "12",

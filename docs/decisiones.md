@@ -356,3 +356,43 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
 - `next/image` optimiza las fotos en producción (https). En local Supabase usa
   `http://127.0.0.1`, que el optimizador bloquea por seguridad, así que ahí se muestran sin
   optimizar (`src/modules/shop/images.ts`).
+
+## DT-031 · Preventa: reservar un producto agotado con anticipo
+
+**Fecha:** 2026-10-17 · **Estado:** vigente (plan aprobado por la dueña)
+
+- Un producto agotado muestra «Reservar» en vez de «Agregar al carrito» si tiene activada la
+  opción «permitir reservarlo» (`products.allow_preorder`, activa por defecto). Se informa el
+  % de anticipo (`preorder_deposit_percent`) y los días estimados (`preorder_delivery_days`).
+- La preventa es un pedido más (`orders.kind = 'preorder'`) con un solo producto. El anticipo se
+  calcula sobre los productos (redondeado hacia arriba al peso); el envío va en el saldo.
+- Estados: pendiente de pago → `deposit_paid` (reservado) → la admin marca «Llegó» →
+  `awaiting_balance` (aparta las unidades y avisa por correo) → la clienta paga el saldo →
+  `paid` y sigue como un pedido normal. Si el anticipo cubre todo, «Llegó» lo deja pagado.
+- Plazo para pagar el saldo: `preorder_balance_days` (7 días, configurable en el panel). Si no
+  paga a tiempo, se cancela, las unidades se liberan y **todo el anticipo pasa a saldo a favor**
+  (vence en `credit_validity_days`, como el de las citas). Decisión de la dueña: opción 1.
+- Lo cierra la tarea diaria (`expire_orders`) o, antes, la propia página del pedido o un pedido
+  nuevo. Una preventa cancelada por la admin queda «por revisar» para devolver el anticipo en
+  Wompi.
+
+## DT-032 · El saldo a favor también se usa en la tienda
+
+**Fecha:** 2026-10-17 · **Estado:** vigente (amplía DT-024)
+
+- Al crear un pedido, la base descuenta automáticamente el saldo vigente (el que vence primero):
+  del total en una compra y del anticipo en una preventa. Wompi cobra solo la diferencia; si el
+  saldo cubre todo, el pedido queda pagado (o reservado) sin pasar por Wompi.
+- Si el pedido vence o se cancela antes de pagarse, el saldo usado vuelve. El saldo del pago del
+  saldo de una preventa no se descuenta: ese pago va completo por Wompi.
+- Movimientos nuevos: `applied_to_order` y `preorder_unpaid` (ligados a `order_id`).
+
+## DT-033 · Lista de espera sin pago
+
+**Fecha:** 2026-10-17 · **Estado:** vigente
+
+- «Avísame cuando llegue» en un producto agotado (requiere cuenta; no aparta nada ni cobra).
+  Tabla `product_waitlist` con RLS: cada clienta ve, crea y borra solo lo suyo.
+- Cuando la admin guarda un producto con unidades disponibles, la app avisa por correo a cada
+  inscrita una sola vez (`notified_at`). Para un nuevo aviso, la clienta se vuelve a inscribir.
+- El panel de productos muestra cuántas preventas y personas en lista de espera tiene cada uno.

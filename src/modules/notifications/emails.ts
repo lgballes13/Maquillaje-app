@@ -117,3 +117,89 @@ export function orderPaidEmail(data: OrderEmailData) {
     }),
   };
 }
+
+export interface PreorderEmailData {
+  businessName: string;
+  customerName: string | null;
+  orderNumber: number;
+  productName: string;
+  quantity: number;
+  depositCop: number;
+  /** Lo que falta por pagar cuando llegue (incluye el envío). */
+  balanceCop: number;
+  deliveryDays: number;
+  orderUrl: string;
+  whatsappNumber?: string;
+}
+
+function whatsappLine(number?: string) {
+  return number ? [`¿Alguna pregunta? Escríbenos por WhatsApp al +${number}.`] : [];
+}
+
+/** Anticipo recibido: el producto queda reservado. */
+export function preorderDepositEmail(data: PreorderEmailData) {
+  const subject = `Reservaste ${data.productName} · pedido #${data.orderNumber} · ${data.businessName}`;
+  const lines = [
+    greeting(data.customerName),
+    `Recibimos el anticipo de ${formatCop(data.depositCop)} y te reservamos ${data.quantity} × ${data.productName} (pedido #${data.orderNumber}).`,
+    `Tiempo estimado de llegada: ${data.deliveryDays} días. Te escribimos apenas llegue.`,
+    `Cuando llegue pagas el saldo: ${formatCop(data.balanceCop)}.`,
+    ...whatsappLine(data.whatsappNumber),
+  ];
+  return {
+    subject,
+    text: `${lines.join("\n\n")}\n\nVer mi pedido: ${data.orderUrl}`,
+    html: layout("Tu reserva quedó lista", lines.map(escapeHtml), {
+      label: "Ver mi pedido",
+      url: data.orderUrl,
+    }),
+  };
+}
+
+/** Llegó el producto reservado: pagar el saldo antes de la fecha límite. */
+export function preorderArrivedEmail(
+  data: PreorderEmailData & { dueOn: string; balanceDays: number },
+) {
+  const subject = `Llegó tu ${data.productName}: paga el saldo · ${data.businessName}`;
+  const lines = [
+    greeting(data.customerName),
+    `¡Llegó lo que reservaste! ${data.quantity} × ${data.productName} (pedido #${data.orderNumber}).`,
+    `Para recibirlo, paga el saldo de ${formatCop(data.balanceCop)} antes del ${data.dueOn}.`,
+    `Si no pagas en ${data.balanceDays} días, liberamos las unidades y tu anticipo de ${formatCop(data.depositCop)} queda como saldo a favor.`,
+    ...whatsappLine(data.whatsappNumber),
+  ];
+  return {
+    subject,
+    text: `${lines.join("\n\n")}\n\nPagar el saldo: ${data.orderUrl}`,
+    html: layout("Llegó tu producto", lines.map(escapeHtml), {
+      label: "Pagar el saldo",
+      url: data.orderUrl,
+    }),
+  };
+}
+
+export interface WaitlistEmailData {
+  businessName: string;
+  customerName: string | null;
+  productName: string;
+  productUrl: string;
+}
+
+/** Aviso de la lista de espera: el producto volvió a tener unidades. */
+export function waitlistBackInStockEmail(data: WaitlistEmailData) {
+  const subject = `Volvió ${data.productName} · ${data.businessName}`;
+  const lines = [
+    greeting(data.customerName),
+    `${data.productName} ya tiene unidades disponibles.`,
+    "Las unidades no quedan apartadas hasta que pagas, así que si lo quieres, no esperes mucho.",
+    "Te avisamos solo esta vez. Si quieres otro aviso, vuelve a inscribirte en la página del producto.",
+  ];
+  return {
+    subject,
+    text: `${lines.join("\n\n")}\n\nVer el producto: ${data.productUrl}`,
+    html: layout("Volvió lo que esperabas", lines.map(escapeHtml), {
+      label: "Ver el producto",
+      url: data.productUrl,
+    }),
+  };
+}

@@ -21,6 +21,8 @@ export const RATE_LIMITS = {
   "appointment:user": { limit: 20, windowSeconds: 60 * 60 },
   // Tienda: crear y cancelar pedidos (cada pedido aparta unidades).
   "order:user": { limit: 20, windowSeconds: 60 * 60 },
+  // Lista de espera: inscribirse o salirse (cada aviso es un correo).
+  "waitlist:user": { limit: 30, windowSeconds: 60 * 60 },
   // Panel: subir fotos de productos.
   "upload:user": { limit: 60, windowSeconds: 60 * 60 },
 } as const;

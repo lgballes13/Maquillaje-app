@@ -43,7 +43,9 @@ export function ProductCard({
           <h2 className="font-semibold">{product.name}</h2>
           <span className="text-lg font-semibold">{formatCop(product.priceCop)}</span>
           {product.available === 0 ? (
-            <span className="text-sm text-muted-foreground">Agotado</span>
+            <span className="text-sm text-muted-foreground">
+              {product.allowPreorder ? "Agotado: puedes reservarlo" : "Agotado"}
+            </span>
           ) : null}
         </div>
       </Link>

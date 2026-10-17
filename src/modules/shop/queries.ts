@@ -57,6 +57,8 @@ export interface CatalogProduct {
   categoryName: string | null;
   image: ProductImage | null;
   available: number;
+  /** Si está agotado, ¿se puede reservar? */
+  allowPreorder: boolean;
 }
 
 /** Catálogo con búsqueda por nombre y filtro por categoría. */
@@ -68,7 +70,7 @@ export async function getCatalog(filters: {
   let query = supabase
     .from("products")
     .select(
-      "id, name, price_cop, product_categories(name, is_active), product_images(storage_path, alt_text, sort_order)",
+      "id, name, price_cop, allow_preorder, product_categories(name, is_active), product_images(storage_path, alt_text, sort_order)",
     )
     .eq("is_active", true)
     .order("sort_order")
@@ -88,6 +90,7 @@ export async function getCatalog(filters: {
     categoryName: product.product_categories?.is_active ? product.product_categories.name : null,
     image: sortedImages(product.product_images)[0] ?? null,
     available: availability.get(product.id) ?? 0,
+    allowPreorder: product.allow_preorder,
   }));
 }
 
@@ -96,7 +99,7 @@ export async function getProduct(id: string) {
   const { data } = await supabase
     .from("products")
     .select(
-      "id, name, description, price_cop, product_categories(id, name, is_active), product_images(storage_path, alt_text, sort_order)",
+      "id, name, description, price_cop, allow_preorder, product_categories(id, name, is_active), product_images(storage_path, alt_text, sort_order)",
     )
     .eq("id", id)
     .eq("is_active", true)
@@ -113,7 +116,43 @@ export async function getProduct(id: string) {
       : null,
     images: sortedImages(data.product_images),
     available: availability.get(id) ?? 0,
+    allowPreorder: data.allow_preorder,
   };
+}
+
+/** Reglas vigentes de la tienda y de las preventas. */
+export async function getShopRules() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("business_rules")
+    .select(
+      "version, shipping_fee_cop, booking_hold_minutes, preorder_deposit_percent, preorder_delivery_days, preorder_balance_days, credit_validity_days",
+    )
+    .order("version", { ascending: false })
+    .limit(1)
+    .single();
+  if (error) throw new Error(`No se pudieron cargar las reglas: ${error.message}`);
+  return data;
+}
+
+/** Saldo a favor vigente de la clienta (0 si no ha ingresado). */
+export async function getMyCredit(): Promise<number> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("my_credit_balance");
+  if (error) return 0;
+  return Math.max(data ?? 0, 0);
+}
+
+/** ¿La clienta está inscrita en la lista de espera de este producto (y aún no la avisamos)? */
+export async function getWaitlistEntry(productId: string, userId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("product_waitlist")
+    .select("notified_at")
+    .eq("product_id", productId)
+    .eq("customer_id", userId)
+    .maybeSingle();
+  return data ? { notified: data.notified_at !== null } : null;
 }
 
 export interface QuoteLine {
@@ -197,7 +236,7 @@ export async function quoteCart(items: CartItem[]): Promise<CartQuote> {
 }
 
 const ORDER_COLUMNS =
-  "id, number, status, delivery_method, recipient_name, phone, address, city, customer_notes, subtotal_cop, shipping_cop, total_cop, hold_expires_at, paid_at, created_at, order_items(id, product_id, product_name, unit_price_cop, quantity, line_total_cop)";
+  "id, number, kind, status, rules_version, deposit_cop, credit_applied_cop, deposit_paid_at, arrived_at, balance_due_at, delivery_method, recipient_name, phone, address, city, customer_notes, subtotal_cop, shipping_cop, total_cop, hold_expires_at, paid_at, created_at, order_items(id, product_id, product_name, unit_price_cop, quantity, line_total_cop)";
 
 /** Un pedido con sus productos (RLS: solo si es de la clienta o si es admin). */
 export async function getOrder(id: string) {
@@ -210,7 +249,9 @@ export async function getMyOrders(userId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("orders")
-    .select("id, number, status, delivery_method, total_cop, hold_expires_at, created_at")
+    .select(
+      "id, number, kind, status, delivery_method, total_cop, hold_expires_at, balance_due_at, created_at",
+    )
     .eq("customer_id", userId)
     .order("created_at", { ascending: false })
     .limit(50);
