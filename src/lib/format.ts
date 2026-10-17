@@ -25,3 +25,53 @@ export const WEEKDAYS = [
   "Viernes",
   "Sábado",
 ] as const;
+
+const longDateFormatter = new Intl.DateTimeFormat("es-CO", {
+  timeZone: "UTC",
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
+
+const shortDateFormatter = new Intl.DateTimeFormat("es-CO", {
+  timeZone: "UTC",
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+});
+
+const clockFormatter = new Intl.DateTimeFormat("es-CO", {
+  timeZone: siteConfig.timeZone,
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+const fullDateTimeFormatter = new Intl.DateTimeFormat("es-CO", {
+  timeZone: siteConfig.timeZone,
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+/** "2026-10-20" → "martes, 20 de octubre" (la fecha ya está en la zona del negocio). */
+export function formatLongDate(date: string): string {
+  return longDateFormatter.format(new Date(`${date}T12:00:00Z`));
+}
+
+/** "2026-10-20" → "mar, 20 oct" */
+export function formatShortDate(date: string): string {
+  return shortDateFormatter.format(new Date(`${date}T12:00:00Z`));
+}
+
+/** Instante → "10:30 a. m." en la hora del negocio. */
+export function formatClock(value: string | Date): string {
+  return clockFormatter.format(typeof value === "string" ? new Date(value) : value);
+}
+
+/** Instante → "martes, 20 de octubre de 2026, 10:30 a. m." */
+export function formatFullDateTime(value: string | Date): string {
+  return fullDateTimeFormatter.format(typeof value === "string" ? new Date(value) : value);
+}

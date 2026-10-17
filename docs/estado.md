@@ -4,7 +4,7 @@
 > una conversación nueva: léelo primero.
 
 **Última actualización:** 2026-10-17
-**Fase actual:** 1 · Datos y acceso (terminada, pendiente de tu revisión y merge del PR)
+**Fase actual:** 2 · Citas y pagos (terminada, pendiente de tu revisión y merge del PR)
 
 ## Plan de fases
 
@@ -12,7 +12,7 @@
 | ---- | -------------------------------------------------------------------------------------------------------- | ------------ |
 | 0    | Base: Next.js, TypeScript, Tailwind/shadcn, lint, pruebas, CI, seguridad, Sentry, PWA                    | ✅ Terminada |
 | 1    | Datos y acceso: migraciones Supabase, RLS, login, admin con 2FA, reglas configurables, auditoría, seed   | ✅ Terminada |
-| 2    | Citas y pagos: servicios, disponibilidad, hold de 10 min, anti-solapamiento, política, anticipo, webhook | ⏳ Pendiente |
+| 2    | Citas y pagos: servicios, disponibilidad, hold de 10 min, anti-solapamiento, política, anticipo, webhook | ✅ Terminada |
 | 3    | Ciclo de la cita: asistió/no asistió, reprogramar, cancelar, penalidades, recordatorios                  | ⏳ Pendiente |
 | 4    | Tienda: catálogo, búsqueda, carrito, checkout, stock atómico, pedidos                                    | ⏳ Pendiente |
 | 5    | Preventa y lista de espera                                                                               | ⏳ Pendiente |
@@ -51,22 +51,50 @@
 - Pruebas: 69 unitarias, 35 de base de datos (pgTAP) y 19 E2E por navegador (Playwright).
 - CI: nuevo trabajo que levanta Supabase, corre pgTAP y las E2E con base de datos real.
 
+## Hecho en la Fase 2
+
+- Pasarela elegida: **Wompi** (checkout web + webhook firmado). Ver DT-018.
+- Migraciones:
+  - `services` (nombre, duración, precio COP; se desactivan, no se borran) y `blocked_periods`.
+  - `appointments` con «foto» del precio y de la política aceptada, y restricción que impide
+    que dos citas se crucen (DT-019).
+  - `payments` y `payment_events` (idempotencia de los avisos de la pasarela).
+  - Funciones `create_booking`, `prepare_appointment_payment`, `apply_payment_event`
+    (solo servidor) y `get_busy_periods` (sin datos personales).
+- Páginas: `/agendar` (servicios), `/agendar/[servicio]` (día y hora), `/agendar/[servicio]/confirmar`
+  (resumen, política y aceptación), `/citas/[id]` (estado y botón de pago), `/cuenta/citas`.
+- Panel: `/admin/servicios` (crear y editar) y `/admin/citas` (próximas citas, pagos por revisar
+  y bloqueos de agenda).
+- Webhook `/api/webhooks/wompi`.
+- Pruebas: 120 unitarias, 79 de base de datos (pgTAP) y 33 E2E por navegador (4 nuevas de citas y pagos).
+- Servicios de ejemplo provisionales: social ($180.000, 90 min), novia ($450.000, 150 min),
+  asesoría ($220.000, 120 min). Se editan desde el panel.
+
+## Para activar pagos reales (cuando quieras)
+
+1. Crea tu cuenta en <https://comercios.wompi.co> y entra en modo **Pruebas**.
+2. En **Desarrolladores → Llaves del API** copia la llave pública (`pub_test_…`), el secreto de
+   integridad (`test_integrity_…`) y el de eventos (`test_events_…`) a `.env.local` o a Vercel.
+   **Nunca los pegues en el chat.**
+3. En **Desarrolladores → URL de eventos** pon `https://TU-DOMINIO/api/webhooks/wompi`.
+4. Cuando todo funcione en pruebas, repite con las llaves de producción (`pub_prod_…`).
+
 ## Preguntas abiertas
 
 - **Plazo para reprogramar:** lo interpreté como «horas que tiene la clienta, después de no
   asistir, para reprogramar y conservar parte del anticipo». Confirmar antes de la Fase 3.
 - **Lista de clientes en el panel:** queda para la Fase 7.
 
-## Datos del negocio pendientes (los necesito antes de la Fase 1 o 2)
+## Datos del negocio pendientes
 
 - [ ] Nombre del negocio, ciudad y país (¿Colombia, COP, America/Bogota?)
-- [ ] Pasarela de pago (propuesta: Wompi)
+- [x] Pasarela de pago: Wompi
 - [ ] Valores iniciales de la política de anticipo (%, horas para reprogramar, % de pérdida, horas para cancelar gratis)
 - [ ] Canales de notificación (propuesta: correo con Resend)
 - [ ] Opciones de envío
 - [ ] Preventa: % de anticipo y días estimados de entrega
 - [ ] Número de WhatsApp
-- [ ] ¿Una sola maquilladora al inicio?
+- [ ] ¿Una sola maquilladora al inicio? (la Fase 2 asume que sí: una sola agenda)
 - [ ] Colores y logo de la marca (los actuales son provisionales)
 
 ## Cuentas que necesitarás
@@ -75,7 +103,7 @@
 - [x] Supabase (proyecto creado; falta aplicar migraciones con `npx supabase db push`)
 - [ ] Vercel (cuando quieras ver la app publicada)
 - [ ] Sentry (opcional, cuando se publique)
-- [ ] Pasarela de pago en modo pruebas (Fase 2)
+- [ ] Wompi en modo pruebas (pasos arriba; la app ya está lista)
 - [ ] Resend (Fase 3)
 
 ## Riesgos y pendientes conocidos
@@ -90,3 +118,9 @@
   largo mínimo de contraseña y crear la primera admin (pasos en el README).
 - Lighthouse aún no se ha medido; se mide y ajusta en la Fase 8.
 - La CSP con nonce obliga a renderizar todo por petición (ver DT-004); revisar rendimiento en la Fase 8.
+- Pagos: el flujo con Wompi se probó con avisos simulados y firmados; falta probarlo contra el
+  sandbox real de Wompi cuando tengas las llaves de pruebas.
+- Una cita marcada «por revisar» (pago tardío con el horario ocupado, monto que no coincide)
+  se resuelve a mano por ahora; las devoluciones automáticas no están en el alcance.
+- Las citas vencidas se marcan cuando alguien hace una reserva nueva; mientras tanto se ven como
+  vencidas en pantalla. No hace falta un proceso programado.

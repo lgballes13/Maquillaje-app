@@ -181,3 +181,62 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   valores enviados (nunca contraseñas ni códigos 2FA) para volver a mostrarlos.
 - Lo detectaron las pruebas E2E: tras un error, el formulario de reglas volvía a los valores
   anteriores.
+
+## DT-018 · Wompi como pasarela de pagos (checkout web + webhook)
+
+**Fecha:** 2026-10-17 · **Estado:** vigente (elegida por la dueña del proyecto)
+
+- Wompi es colombiana y acepta tarjeta, PSE, Nequi y otros medios en COP.
+- Se usa el **checkout web** (formulario que lleva a `checkout.wompi.co`): la app nunca ve
+  datos de tarjeta, lo que reduce el alcance de PCI.
+- El monto va firmado con el **secreto de integridad**; si alguien lo cambia en el navegador,
+  Wompi rechaza la transacción.
+- El resultado llega por **webhook** a `/api/webhooks/wompi`; se verifica con el **secreto de
+  eventos** (comparación en tiempo constante) antes de aplicar nada.
+- Respaldo: al volver de Wompi (`?id=`), el servidor consulta la transacción en la API de
+  Wompi y la aplica si pertenece a esa cita. Sirve cuando el webhook se demora.
+- La lógica de pagos está separada (`src/modules/payments/`) para poder cambiar de pasarela.
+
+## DT-019 · La base de datos garantiza que dos citas nunca se crucen
+
+**Fecha:** 2026-10-17 · **Estado:** vigente
+
+- Restricción `EXCLUDE USING gist (period WITH &&)` sobre citas pendientes de pago o
+  confirmadas. `period` = inicio de la cita hasta su fin + minutos de preparación.
+- Funciona aunque dos personas reserven en el mismo milisegundo; no depende del código de la app.
+- Por ahora hay **una sola agenda** (una maquilladora). Si se agregan más, la restricción
+  incluirá la maquilladora (`artist_id WITH =`).
+
+## DT-020 · Reserva en dos pasos: hold de minutos y luego pago
+
+**Fecha:** 2026-10-17 · **Estado:** vigente
+
+- `create_booking()` aparta el horario por `booking_hold_minutes` (hoy 10) en estado
+  «pendiente de pago». Si no se paga a tiempo, cualquier reserva nueva lo libera.
+- Una clienta tiene un solo horario apartado a la vez.
+- Si llega un pago **pendiente** (ej.: PSE), el horario se mantiene 60 minutos más.
+- Si llega un pago aprobado **después** de vencer el tiempo: si el horario sigue libre se
+  confirma; si ya lo tomó otra persona, la cita queda «por revisar» en el panel para devolver
+  el dinero o reprogramar. Nunca se pierde un pago en silencio.
+
+## DT-021 · El dinero se calcula en la base de datos
+
+**Fecha:** 2026-10-17 · **Estado:** vigente
+
+- El navegador solo envía servicio, hora y versión de la política aceptada.
+- `create_booking()` toma precio, duración y % de anticipo de la base y guarda una «foto» en
+  la cita (precio, anticipo, versión de reglas), redondeando el anticipo hacia arriba al peso.
+- Si las reglas cambian mientras la clienta reserva, la reserva se rechaza y debe aceptar la
+  versión nueva.
+- `apply_payment_event()` (solo service_role) es idempotente: cada estado de cada transacción
+  se aplica una sola vez, un pago aprobado nunca retrocede, y un monto que no coincide con el
+  anticipo no confirma nada.
+
+## DT-022 · Horarios cada 30 minutos en la zona horaria del negocio
+
+**Fecha:** 2026-10-17 · **Estado:** vigente
+
+- Los horarios ofrecidos se calculan en el servidor (`computeSlots`) en hora de Bogotá, cada
+  30 minutos desde la apertura, y deben terminar antes del cierre.
+- Bloqueos de agenda (`blocked_periods`) para vacaciones o eventos; el motivo solo lo ve el admin.
+- La disponibilidad pública (`get_busy_periods`) solo expone inicio y fin, sin datos de nadie.

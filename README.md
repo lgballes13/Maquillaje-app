@@ -159,6 +159,20 @@ Luego, en el panel de Supabase (<https://supabase.com/dashboard>):
 
 > Cada vez que haya migraciones nuevas: `npx supabase db push`.
 
+## Pagos con Wompi
+
+En local la app usa llaves **de mentira** (ver `.env.local`), suficientes para ver el botón de
+pago y correr las pruebas; el pago real no funciona con ellas. Para probar contra Wompi:
+
+1. Crea tu cuenta en <https://comercios.wompi.co> y usa el modo **Pruebas**.
+2. En **Desarrolladores → Llaves del API** copia `pub_test_…`, `test_integrity_…` y
+   `test_events_…` a `NEXT_PUBLIC_WOMPI_PUBLIC_KEY`, `WOMPI_INTEGRITY_SECRET` y
+   `WOMPI_EVENTS_SECRET`.
+3. En **Desarrolladores → URL de eventos** pon `https://TU-DOMINIO/api/webhooks/wompi`
+   (Wompi no puede avisarle a `localhost`; en local, al volver del checkout la app consulta el
+   resultado directamente en Wompi).
+4. Las tarjetas y datos de prueba están en la documentación de Wompi: <https://docs.wompi.co>.
+
 ## Despliegue en Vercel
 
 1. Entra a <https://vercel.com/new> e importa el repositorio `Maquillaje-app`.

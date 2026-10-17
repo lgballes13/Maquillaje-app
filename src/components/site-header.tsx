@@ -11,7 +11,7 @@ export async function SiteHeader() {
 
   return (
     <header className="border-b border-border bg-card">
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-2">
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-2 px-4 py-2">
         <Link
           href="/"
           className="inline-flex min-h-11 items-center text-lg font-semibold text-primary"
@@ -20,6 +20,11 @@ export async function SiteHeader() {
         </Link>
         <nav aria-label="Principal">
           <ul className="flex items-center gap-1">
+            <li>
+              <Link href="/agendar" className={linkClass}>
+                Agendar
+              </Link>
+            </li>
             {isAdmin ? (
               <li>
                 <Link href="/admin" className={linkClass}>

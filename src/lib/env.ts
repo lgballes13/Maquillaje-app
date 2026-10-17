@@ -18,6 +18,14 @@ export const publicEnvSchema = z.object({
   // son las reglas RLS de la base de datos.
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20).optional(),
   NEXT_PUBLIC_SENTRY_DSN: z.url().optional(),
+  // Llave pública de Wompi: pub_test_… (pruebas) o pub_prod_… (dinero real).
+  NEXT_PUBLIC_WOMPI_PUBLIC_KEY: z
+    .string()
+    .regex(
+      /^pub_(test|prod)_\w+$/,
+      "NEXT_PUBLIC_WOMPI_PUBLIC_KEY debe empezar por pub_test_ o pub_prod_",
+    )
+    .optional(),
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
@@ -50,6 +58,7 @@ export const publicEnv = parsePublicEnv({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  NEXT_PUBLIC_WOMPI_PUBLIC_KEY: process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY,
 });
 
 /** Devuelve la URL y la clave pública de Supabase, o lanza un error claro si faltan. */

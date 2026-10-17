@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { signOutAction } from "@/modules/auth/actions";
 import { requireUser } from "@/modules/auth/session";
@@ -53,13 +54,20 @@ export default async function AccountPage({ searchParams }: PageProps<"/cuenta">
       </section>
 
       <section
-        aria-labelledby="titulo-proximamente"
+        aria-labelledby="titulo-citas"
         className="mt-6 rounded-xl border border-border bg-card p-5"
       >
-        <h2 id="titulo-proximamente" className="text-lg font-semibold">
-          Tus citas y pedidos
+        <h2 id="titulo-citas" className="text-lg font-semibold">
+          Tus citas
         </h2>
-        <p className="mt-2 text-sm text-muted-foreground">Muy pronto podrás verlos aquí.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link href="/cuenta/citas" className={buttonVariants({ variant: "outline" })}>
+            Ver mis citas
+          </Link>
+          <Link href="/agendar" className={buttonVariants()}>
+            Agendar una cita
+          </Link>
+        </div>
       </section>
 
       <form action={signOutAction} className="mt-6">

@@ -49,7 +49,8 @@ export function buildCsp({
     "frame-src": ["'none'"],
     "object-src": ["'none'"],
     "base-uri": ["'self'"],
-    "form-action": ["'self'"],
+    // El botón «Pagar» envía un formulario al checkout de Wompi.
+    "form-action": ["'self'", "https://checkout.wompi.co"],
     "frame-ancestors": ["'none'"],
     "manifest-src": ["'self'"],
     "worker-src": ["'self'", "blob:"],
