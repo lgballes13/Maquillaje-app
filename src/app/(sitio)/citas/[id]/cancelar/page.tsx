@@ -2,10 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
-import { formatFullDateTime } from "@/lib/format";
+import { formatFullDateTime, formatLongDate } from "@/lib/format";
+import { toZonedDateString } from "@/lib/time";
+import { siteConfig } from "@/config/site";
 import { requireUser } from "@/modules/auth/session";
 import { CancelAppointmentForm } from "@/modules/booking/components/cancel-form";
-import { availableAction, cancellationPreview, formatCop } from "@/modules/booking/policy";
+import {
+  availableAction,
+  cancellationPreview,
+  creditExpiresAt,
+  formatCop,
+} from "@/modules/booking/policy";
 import { getAppointmentWithPolicy } from "@/modules/booking/queries";
 
 export const metadata: Metadata = { title: "Cancelar cita", robots: { index: false } };
@@ -22,6 +29,7 @@ export default async function CancelAppointmentPage({ params }: PageProps<"/cita
   const action = availableAction({ ...appointment, rescheduled }, rules);
   const canCancel = action.kind === "change" || action.kind === "cancel_only";
   const preview = cancellationPreview(appointment, rules);
+  const expiresOn = formatLongDate(toZonedDateString(creditExpiresAt(rules), siteConfig.timeZone));
 
   return (
     <main id="contenido" className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
@@ -57,6 +65,10 @@ export default async function CancelAppointmentPage({ params }: PageProps<"/cita
                 para tu próxima cita.
               </p>
             )}
+            <p className="mt-2 text-sm" data-testid="credit-expiry">
+              El saldo a favor vence en {rules.credit_validity_days} días (el {expiresOn}) y se usa
+              solo para el anticipo de otra cita.
+            </p>
             {action.kind === "change" ? (
               <p className="mt-3 text-sm">
                 ¿Solo necesitas otro día u hora?{" "}

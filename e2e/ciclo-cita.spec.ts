@@ -57,6 +57,9 @@ test.describe("Cancelar una cita", () => {
 
     await page.getByRole("link", { name: "Cancelar cita" }).click();
     await expect(page.getByTestId("cancel-preview")).toContainText("todo tu anticipo");
+    await expect(page.getByTestId("credit-expiry")).toContainText(
+      `vence en ${appt.rules.credit_validity_days} días`,
+    );
     await expectNoA11yViolations(page);
     await page.getByRole("button", { name: "Sí, cancelar mi cita" }).click();
 
@@ -66,6 +69,7 @@ test.describe("Cancelar una cita", () => {
     );
     await page.goto("/cuenta");
     expect(await digits(page, "credit-balance")).toBe(String(DEPOSIT));
+    await expect(page.getByTestId("credit-lots")).toContainText("vence el");
 
     // La próxima reserva usa el saldo: como cubre todo el anticipo, se confirma sin pagar.
     const serviceId = await socialServiceId(page);

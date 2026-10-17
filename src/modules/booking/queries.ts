@@ -71,6 +71,14 @@ export async function getMyCreditBalance(): Promise<number> {
   return data ?? 0;
 }
 
+/** Saldo a favor vigente de la clienta con sesión, con su fecha de vencimiento (el que vence antes, primero). */
+export async function getMyCreditLots() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("my_credit_lots");
+  if (error) throw new Error(`No se pudo consultar el saldo a favor: ${error.message}`);
+  return data;
+}
+
 /** Horarios libres de un servicio en una fecha (hora del negocio). */
 export async function getSlotsForDate(
   service: { duration_minutes: number },
@@ -127,7 +135,9 @@ export async function getAppointmentWithPolicy(id: string) {
   const [{ data: rules }, { data: next }] = await Promise.all([
     supabase
       .from("business_rules")
-      .select("free_cancellation_hours, reschedule_window_hours, reschedule_penalty_percent")
+      .select(
+        "free_cancellation_hours, reschedule_window_hours, reschedule_penalty_percent, credit_validity_days",
+      )
       .eq("version", appointment.rules_version)
       .single(),
     supabase.from("appointments").select("id").eq("rescheduled_from", id).maybeSingle(),

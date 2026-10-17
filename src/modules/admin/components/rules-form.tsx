@@ -32,11 +32,20 @@ const FIELDS: {
   {
     name: "free_cancellation_hours",
     label: "Cancelación sin penalidad",
-    hint: "Si cancela con al menos estas horas de anticipación, el anticipo queda como crédito a favor.",
+    hint: "Si cancela con al menos estas horas de anticipación, todo el anticipo queda como saldo a favor.",
     min: 0,
     max: 720,
     step: 1,
     unit: "horas",
+  },
+  {
+    name: "credit_validity_days",
+    label: "Vigencia del saldo a favor",
+    hint: "Días que dura el saldo a favor desde que se genera. Después vence y no se puede usar.",
+    min: 1,
+    max: 365,
+    step: 1,
+    unit: "días",
   },
   {
     name: "reschedule_window_hours",

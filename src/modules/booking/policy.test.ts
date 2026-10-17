@@ -3,6 +3,7 @@ import {
   amountDueToday,
   availableAction,
   cancellationPreview,
+  creditExpiresAt,
   penaltyFor,
   bookingErrorMessage,
   depositFor,
@@ -18,6 +19,7 @@ const rules = {
   reschedule_window_hours: 24,
   reschedule_penalty_percent: "30.00",
   booking_hold_minutes: 10,
+  credit_validity_days: 15,
 };
 
 describe("depositFor", () => {
@@ -58,6 +60,7 @@ describe("policyPoints", () => {
     expect(points).toContain("48 horas");
     expect(points).toContain("24 horas");
     expect(points).toContain("30 %");
+    expect(points).toContain("vence 15 días después");
   });
 
   it("sin anticipo, lo dice y no habla de pagos", () => {
@@ -99,6 +102,7 @@ const lifecycle = {
   free_cancellation_hours: 48,
   reschedule_window_hours: 24,
   reschedule_penalty_percent: 30,
+  credit_validity_days: 15,
 };
 const HOUR = 60 * 60 * 1000;
 const NOW = new Date("2026-10-20T15:00:00Z");
@@ -224,5 +228,11 @@ describe("amountDueToday", () => {
 
   it("un saldo negativo no aumenta el cobro", () => {
     expect(amountDueToday(90000, -5000)).toEqual({ creditApplied: 0, due: 90000 });
+  });
+});
+
+describe("creditExpiresAt", () => {
+  it("suma los días de vigencia del saldo", () => {
+    expect(creditExpiresAt(lifecycle, NOW).toISOString()).toBe("2026-11-04T15:00:00.000Z");
   });
 });

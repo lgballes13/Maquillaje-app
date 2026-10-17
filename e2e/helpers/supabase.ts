@@ -48,7 +48,9 @@ export async function createTestUser({ admin = false, name = "Persona de Prueba"
 export async function currentRules() {
   const { data, error } = await adminClient()
     .from("business_rules")
-    .select("version, free_cancellation_hours, reschedule_window_hours, reschedule_penalty_percent")
+    .select(
+      "version, free_cancellation_hours, reschedule_window_hours, reschedule_penalty_percent, credit_validity_days",
+    )
     .order("version", { ascending: false })
     .limit(1)
     .single();

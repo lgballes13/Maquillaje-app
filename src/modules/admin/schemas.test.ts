@@ -12,6 +12,7 @@ const rulesForm = {
   reschedule_window_hours: "24",
   reschedule_penalty_percent: "30",
   free_cancellation_hours: "48",
+  credit_validity_days: "15",
   preorder_deposit_percent: "50",
   preorder_delivery_days: "15",
   buffer_minutes: "15",

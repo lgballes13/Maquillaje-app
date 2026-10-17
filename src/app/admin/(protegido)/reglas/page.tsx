@@ -38,6 +38,7 @@ export default async function BusinessRulesPage() {
             reschedule_window_hours: current.reschedule_window_hours,
             reschedule_penalty_percent: Number(current.reschedule_penalty_percent),
             free_cancellation_hours: current.free_cancellation_hours,
+            credit_validity_days: current.credit_validity_days,
             preorder_deposit_percent: Number(current.preorder_deposit_percent),
             preorder_delivery_days: current.preorder_delivery_days,
             buffer_minutes: current.buffer_minutes,
