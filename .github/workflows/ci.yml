@@ -46,9 +46,9 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
 
   e2e:
-    name: Pruebas E2E (Playwright)
+    name: Base de datos y pruebas E2E
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     needs: calidad
     steps:
       - uses: actions/checkout@v4
@@ -57,6 +57,19 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Iniciar Supabase local (Docker)
+        run: npx supabase start -x studio,imgproxy,vector,logflare,supavisor,edge-runtime,postgres-meta
+      - name: Exportar las claves de Supabase local
+        # Son claves de un Supabase de pruebas que solo existe en esta máquina de CI.
+        run: |
+          npx supabase status -o env \
+            --override-name api.url=NEXT_PUBLIC_SUPABASE_URL \
+            --override-name auth.anon_key=NEXT_PUBLIC_SUPABASE_ANON_KEY \
+            --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
+            | grep -E '^(NEXT_PUBLIC_SUPABASE_URL|NEXT_PUBLIC_SUPABASE_ANON_KEY|SUPABASE_SERVICE_ROLE_KEY)=' \
+            | sed 's/"//g' >> "$GITHUB_ENV"
+      - name: Pruebas de seguridad de la base de datos (pgTAP + RLS)
+        run: npx supabase test db
       - name: Compilar la app
         run: npm run build
       - name: Instalar navegadores (Chromium y WebKit/Safari)

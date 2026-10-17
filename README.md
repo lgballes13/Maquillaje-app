@@ -9,20 +9,22 @@ panel de administración.
 
 ## Tecnologías
 
-| Pieza                           | Herramienta                                                    |
-| ------------------------------- | -------------------------------------------------------------- |
-| Frontend y backend              | Next.js 16 (App Router) + TypeScript estricto                  |
-| Estilos                         | Tailwind CSS 4 + componentes shadcn/ui                         |
-| Base de datos, login y archivos | Supabase (PostgreSQL + Auth + Storage) con RLS                 |
-| Validación                      | Zod                                                            |
-| Pruebas                         | Vitest (unitarias) y Playwright (E2E, incluye móvil de 360 px) |
-| Errores                         | Sentry                                                         |
-| Hosting                         | Vercel                                                         |
+| Pieza                           | Herramienta                                                  |
+| ------------------------------- | ------------------------------------------------------------ |
+| Frontend y backend              | Next.js 16 (App Router) + TypeScript estricto                |
+| Estilos                         | Tailwind CSS 4 + componentes shadcn/ui                       |
+| Base de datos, login y archivos | Supabase (PostgreSQL + Auth + Storage) con RLS               |
+| Validación                      | Zod                                                          |
+| Pruebas                         | Vitest (unitarias), pgTAP (base de datos) y Playwright (E2E) |
+| Errores                         | Sentry                                                       |
+| Hosting                         | Vercel                                                       |
 
 ## Requisitos
 
 - **Node.js 22** o superior → <https://nodejs.org> (verifica con `node -v`).
 - **Git** → <https://git-scm.com>.
+- **Docker Desktop** → <https://www.docker.com/products/docker-desktop/> (para la base de
+  datos local de Supabase). Ábrelo antes de ejecutar `npm run db:start`.
 
 ## Instalación (primera vez)
 
@@ -32,46 +34,81 @@ cd Maquillaje-app
 npm install
 cp .env.example .env.local      # en Windows (PowerShell): copy .env.example .env.local
 npx playwright install          # descarga los navegadores para las pruebas E2E
+npm run db:start                # inicia Supabase local en Docker (la primera vez tarda varios minutos)
 ```
 
-Luego abre `.env.local` y llena los valores (cada variable está explicada en el
-archivo).
+`npm run db:start` muestra al final varios datos. Copia estos tres a `.env.local`:
+
+| Lo que muestra Supabase         | Variable en `.env.local`        |
+| ------------------------------- | ------------------------------- |
+| `API URL` (o `Project URL`)     | `NEXT_PUBLIC_SUPABASE_URL`      |
+| `anon key` (o `Publishable`)    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
+| `service_role key` (o `Secret`) | `SUPABASE_SERVICE_ROLE_KEY`     |
+
+Si los necesitas de nuevo: `npx supabase status`.
+
+Luego ejecuta `npm run dev` y abre <http://localhost:3000>.
+
+### Usuarios de prueba (solo en local)
+
+`supabase/seed.sql` crea estos usuarios cada vez que ejecutas `npm run db:reset`
+(contraseña de todos: `ClaveDePrueba123`):
+
+| Correo                  | Rol                                             |
+| ----------------------- | ----------------------------------------------- |
+| `admin@demo.example`    | Admin (te pedirá configurar 2FA la primera vez) |
+| `cliente@demo.example`  | Cliente                                         |
+| `cliente2@demo.example` | Cliente                                         |
+
+Los correos que envía la app en local (confirmación, recuperar contraseña) no salen a
+internet: los ves en **Mailpit**, <http://127.0.0.1:54324>.
+
+Para el 2FA del admin usa cualquier app autenticadora en tu celular (Google
+Authenticator, Microsoft Authenticator o Authy).
 
 ## Comandos del día a día
 
-| Comando               | Qué hace                                                        |
-| --------------------- | --------------------------------------------------------------- |
-| `npm run dev`         | Inicia la app en <http://localhost:3000> con recarga automática |
-| `npm run build`       | Compila la versión de producción                                |
-| `npm run start`       | Sirve la versión compilada                                      |
-| `npm run lint`        | Revisa errores comunes en el código (ESLint)                    |
-| `npm run typecheck`   | Revisa los tipos de TypeScript                                  |
-| `npm run format`      | Ordena el formato del código (Prettier)                         |
-| `npm run test`        | Corre las pruebas unitarias (Vitest)                            |
-| `npm run test:e2e`    | Compila, levanta la app y corre las pruebas E2E (Playwright)    |
-| `npm run test:e2e:ui` | Igual, pero con la interfaz visual de Playwright                |
-| `npm run check`       | Lint + tipos + formato + unitarias (lo mismo que revisa la CI)  |
+| Comando                        | Qué hace                                                        |
+| ------------------------------ | --------------------------------------------------------------- |
+| `npm run dev`                  | Inicia la app en <http://localhost:3000> con recarga automática |
+| `npm run build`                | Compila la versión de producción                                |
+| `npm run start`                | Sirve la versión compilada                                      |
+| `npm run lint`                 | Revisa errores comunes en el código (ESLint)                    |
+| `npm run typecheck`            | Revisa los tipos de TypeScript                                  |
+| `npm run format`               | Ordena el formato del código (Prettier)                         |
+| `npm run test`                 | Corre las pruebas unitarias (Vitest)                            |
+| `npm run test:e2e`             | Compila, levanta la app y corre las pruebas E2E (Playwright)    |
+| `npm run test:e2e:ui`          | Igual, pero con la interfaz visual de Playwright                |
+| `npm run check`                | Lint + tipos + formato + unitarias (lo mismo que revisa la CI)  |
+| `npm run db:start` / `db:stop` | Enciende / apaga Supabase local                                 |
+| `npm run db:reset`             | Borra la base local y la crea de nuevo (migraciones + seed)     |
+| `npm run db:test`              | Pruebas de seguridad de la base de datos (RLS, pgTAP)           |
+| `npm run db:types`             | Regenera los tipos de TypeScript a partir de la base de datos   |
 
-Para correr solo el proyecto móvil de Playwright:
-`npx playwright test --project=movil-360`.
+Las pruebas E2E necesitan Supabase local encendido (`npm run db:start`).
+Para correr solo el proyecto móvil de Playwright: `npx playwright test --project=movil-360`.
 
 ## Estructura de carpetas
 
 ```
 src/
-  app/            Páginas y rutas (App Router). api/ = endpoints del servidor
-  components/     Componentes de React. ui/ = componentes base de shadcn/ui
-  config/         Configuración general del sitio
-  lib/            Lógica reutilizable (validación de entorno, seguridad, utilidades)
-  proxy.ts        Se ejecuta antes de cada página (CSP con nonce)
+  app/            Páginas y rutas (App Router). (sitio)/ = público y cuenta; admin/ = panel
+  components/     Componentes de React. ui/ = base de shadcn/ui; forms/ = campos de formulario
+  config/         Configuración general del sitio y versión de la política de datos
+  lib/            Lógica reutilizable (entorno, seguridad, Supabase, formularios)
+  modules/        Lógica por dominio: auth/ (cuentas y 2FA), admin/ (reglas del negocio)
+  proxy.ts        Se ejecuta antes de cada página (CSP con nonce + renovar la sesión)
+supabase/
+  migrations/     Cambios de la base de datos, en orden (nunca edites uno ya aplicado)
+  tests/database/ Pruebas de seguridad de la base de datos (pgTAP)
+  seed.sql        Datos de prueba para desarrollo local
 e2e/              Pruebas de extremo a extremo (Playwright)
 docs/             Estado del proyecto y decisiones técnicas
 .github/          Integración continua (GitHub Actions) y Dependabot
 ```
 
-A partir de la Fase 1 se agregan los módulos por dominio dentro de
-`src/modules/` (citas, tienda, preventas, portafolio, admin) y la carpeta
-`supabase/` con las migraciones de la base de datos.
+En las próximas fases se agregan más módulos en `src/modules/` (citas, tienda,
+preventas, portafolio).
 
 ## Variables de entorno
 
@@ -87,14 +124,47 @@ Todas están documentadas en [`.env.example`](.env.example). Reglas:
 Cada push a GitHub ejecuta `.github/workflows/ci.yml`:
 
 1. Lint, tipos, formato, pruebas unitarias y auditoría de dependencias.
-2. Compilación y pruebas E2E en Chromium (escritorio y móvil 360 px) y WebKit (iPhone).
+2. Supabase local en Docker, pruebas de seguridad de la base de datos, compilación y
+   pruebas E2E en Chromium (escritorio y móvil 360 px) y WebKit (iPhone).
+
+## Supabase en producción
+
+Hazlo una vez (en tu computador, dentro de la carpeta del proyecto):
+
+```bash
+npx supabase login                               # abre el navegador para autorizar
+npx supabase link --project-ref TU_PROJECT_REF   # el texto que va antes de .supabase.co
+npx supabase db push                             # aplica las migraciones (NO el seed)
+```
+
+Luego, en el panel de Supabase (<https://supabase.com/dashboard>):
+
+1. **Authentication → URL Configuration**
+   - _Site URL_: tu dominio (ej.: `https://tudominio.com`). Mientras no tengas dominio,
+     usa `http://localhost:3000`.
+   - _Redirect URLs_: `https://tudominio.com/**` y `http://localhost:3000/**`.
+2. **Authentication → Sign In / Providers → Email**: deja activo _Confirm email_, activa
+   _Secure password change_ y pon _Minimum password length_ en **12**.
+3. **Authentication → Multi-Factor**: verifica que _TOTP (App Authenticator)_ esté habilitado.
+4. **Authentication → Rate Limits**: revisa los límites (los de la app son una capa extra).
+5. **Crear la primera admin.** Regístrate normalmente en el sitio y luego, en
+   **SQL Editor**, ejecuta (cambia el correo):
+
+   ```sql
+   insert into public.user_roles (user_id, role)
+   select id, 'admin' from auth.users where email = 'tu-correo@ejemplo.com';
+   ```
+
+   Al entrar a `/admin` te pedirá configurar la verificación en dos pasos.
+
+> Cada vez que haya migraciones nuevas: `npx supabase db push`.
 
 ## Despliegue en Vercel
 
 1. Entra a <https://vercel.com/new> e importa el repositorio `Maquillaje-app`.
 2. Vercel detecta Next.js solo; no cambies los comandos.
 3. En **Environment Variables** agrega las variables de `.env.example`
-   (con `NEXT_PUBLIC_SITE_URL` igual a tu dominio real).
+   (con `NEXT_PUBLIC_SITE_URL` igual a tu dominio real y las claves del Supabase de producción).
 4. Pulsa **Deploy**. Cada push a `main` desplegará automáticamente.
 
-El paso a paso detallado (dominio, Supabase y Sentry) se completa en la Fase 8.
+El paso a paso detallado (dominio y Sentry) se completa en la Fase 8.

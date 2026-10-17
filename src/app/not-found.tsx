@@ -8,7 +8,7 @@ export default function NotFound() {
       className="mx-auto flex max-w-md flex-1 flex-col items-center justify-center px-4 py-16 text-center"
     >
       <h1 className="text-2xl font-bold">No encontramos esta página</h1>
-      <p className="text-muted-foreground mt-2">
+      <p className="mt-2 text-muted-foreground">
         Puede que el enlace esté mal escrito o que la página ya no exista.
       </p>
       <Button asChild className="mt-6">

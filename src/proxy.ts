@@ -1,12 +1,13 @@
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { buildCsp, generateNonce } from "@/lib/security/csp";
+import { updateSession } from "@/lib/supabase/proxy";
 
 /**
- * El "proxy" (antes llamado middleware) se ejecuta antes de cada página.
- * Aquí generamos un nonce nuevo por petición y armamos la CSP con él.
- * Next.js lee la CSP de la petición y le pone el nonce a sus propios scripts.
+ * El "proxy" (antes llamado middleware) se ejecuta antes de cada página:
+ * 1. Genera un nonce nuevo y arma la CSP con él (Next.js se lo pone a sus scripts).
+ * 2. Renueva la sesión de Supabase si está por vencer.
  */
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const nonce = generateNonce();
   const csp = buildCsp({
     nonce,
@@ -19,7 +20,7 @@ export function proxy(request: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", csp);
 
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  const response = await updateSession(request, requestHeaders);
   response.headers.set("Content-Security-Policy", csp);
   return response;
 }

@@ -14,6 +14,9 @@ export const publicEnvSchema = z.object({
     .regex(/^\d{8,15}$/, "NEXT_PUBLIC_WHATSAPP_NUMBER debe tener solo dígitos (8 a 15)")
     .optional(),
   NEXT_PUBLIC_SUPABASE_URL: z.url().optional(),
+  // La clave "anon" o "publishable" es pública por diseño: la protección real
+  // son las reglas RLS de la base de datos.
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20).optional(),
   NEXT_PUBLIC_SENTRY_DSN: z.url().optional(),
 });
 
@@ -45,5 +48,18 @@ export const publicEnv = parsePublicEnv({
   NEXT_PUBLIC_BUSINESS_NAME: process.env.NEXT_PUBLIC_BUSINESS_NAME ?? "Estudio de Maquillaje",
   NEXT_PUBLIC_WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
 });
+
+/** Devuelve la URL y la clave pública de Supabase, o lanza un error claro si faltan. */
+export function getSupabasePublicConfig(): { url: string; anonKey: string } {
+  const url = publicEnv.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
+    throw new Error(
+      "Faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY en .env.local (ver README).",
+    );
+  }
+  return { url, anonKey };
+}
