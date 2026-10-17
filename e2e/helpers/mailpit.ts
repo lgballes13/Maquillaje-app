@@ -28,3 +28,23 @@ export async function waitForEmailLink(to: string, timeoutMs = 20_000): Promise<
   }
   throw new Error(`No llegó ningún correo a ${to}`);
 }
+
+/** Espera un correo para `to` cuyo asunto contenga `subject`, y devuelve su texto. */
+export async function waitForEmail(to: string, subject: string, timeoutMs = 20_000) {
+  const deadline = Date.now() + timeoutMs;
+  const query = encodeURIComponent(`to:${to} subject:"${subject}"`);
+  while (Date.now() < deadline) {
+    const res = await fetch(`${MAILPIT_URL}/api/v1/search?query=${query}`);
+    const { messages } = (await res.json()) as { messages: MailpitSummary[] };
+    const latest = messages[0];
+    if (latest) {
+      return (await (await fetch(`${MAILPIT_URL}/api/v1/message/${latest.ID}`)).json()) as {
+        Subject: string;
+        Text: string;
+        HTML: string;
+      };
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error(`No llegó el correo «${subject}» a ${to}`);
+}

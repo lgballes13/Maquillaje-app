@@ -1,7 +1,13 @@
-import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import { enrollTotp, login } from "./helpers/auth";
+import {
+  confirmBooking,
+  expectNoA11yViolations,
+  pickRandomSlot,
+  randomWorkday,
+  socialServiceId,
+} from "./helpers/booking";
 import { createTestUser } from "./helpers/supabase";
 import { signedWompiEvent } from "./helpers/wompi";
 
@@ -10,67 +16,6 @@ import { signedWompiEvent } from "./helpers/wompi";
  * de datos y una sola agenda, así que cada una elige un día al azar para no
  * pelear por el mismo horario.
  */
-
-const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
-
-async function expectNoA11yViolations(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
-  expect(results.violations).toEqual([]);
-}
-
-function bogotaToday(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(new Date());
-}
-
-function addDays(date: string, days: number): string {
-  const d = new Date(`${date}T12:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-
-/** Un día hábil (lunes a sábado) al azar entre `from` y `to` días desde hoy. */
-function randomWorkday(from: number, to: number): string {
-  for (;;) {
-    const date = addDays(bogotaToday(), from + Math.floor(Math.random() * (to - from + 1)));
-    if (new Date(`${date}T12:00:00Z`).getUTCDay() !== 0) return date;
-  }
-}
-
-/** Abre la página de horarios del servicio para un día al azar con horarios libres. */
-async function openRandomDay(page: Page, serviceId: string) {
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const date = randomWorkday(3, 80);
-    await page.goto(`/agendar/${serviceId}?fecha=${date}`);
-    const slots = page.getByRole("link", { name: /^Reservar a las/ });
-    if ((await slots.count()) > 0) return { date, slots };
-  }
-  throw new Error("No se encontró un día con horarios libres");
-}
-
-async function pickRandomSlot(page: Page, serviceId: string) {
-  const { date, slots } = await openRandomDay(page, serviceId);
-  const count = await slots.count();
-  const slot = slots.nth(Math.floor(Math.random() * count));
-  const label = (await slot.getAttribute("aria-label"))!;
-  await slot.click();
-  return { date, label };
-}
-
-/** Acepta la política y aparta el horario. Si otra prueba cambió las reglas justo ahora, recarga. */
-async function confirmBooking(page: Page) {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    await page.getByLabel(/Leí y acepto la política de citas/).check();
-    await page.getByRole("button", { name: /Apartar horario/ }).click();
-    const status = page.getByTestId("appointment-status");
-    const policyChanged = page
-      .getByTestId("form-message")
-      .filter({ hasText: "La política de citas cambió" });
-    await expect(status.or(policyChanged)).toBeVisible();
-    if (await status.isVisible()) return;
-    await page.reload();
-  }
-  throw new Error("No se pudo confirmar la reserva");
-}
 
 async function readCheckout(page: Page) {
   const form = page.getByTestId("wompi-form");
@@ -82,13 +27,6 @@ async function readCheckout(page: Page) {
     signature: await field("signature:integrity"),
     redirectUrl: await field("redirect-url"),
   };
-}
-
-async function socialServiceId(page: Page): Promise<string> {
-  await page.goto("/agendar");
-  await page.getByRole("link", { name: "Elegir Maquillaje social" }).click();
-  await expect(page).toHaveURL(/\/agendar\/[0-9a-f-]{36}/);
-  return new URL(page.url()).pathname.split("/")[2]!;
 }
 
 test.describe("Agendar una cita", () => {

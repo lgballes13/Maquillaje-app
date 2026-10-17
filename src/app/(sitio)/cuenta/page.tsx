@@ -4,6 +4,8 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { signOutAction } from "@/modules/auth/actions";
 import { requireUser } from "@/modules/auth/session";
+import { formatCop } from "@/modules/booking/policy";
+import { getMyCreditBalance } from "@/modules/booking/queries";
 
 export const metadata: Metadata = { title: "Mi cuenta", robots: { index: false } };
 
@@ -13,11 +15,14 @@ export default async function AccountPage({ searchParams }: PageProps<"/cuenta">
 
   // RLS garantiza que esta consulta solo puede devolver el perfil propio.
   const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, phone, privacy_accepted_at")
-    .eq("id", user.id)
-    .single();
+  const [{ data: profile }, credit] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("full_name, phone, privacy_accepted_at")
+      .eq("id", user.id)
+      .single(),
+    getMyCreditBalance(),
+  ]);
 
   return (
     <main id="contenido" className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
@@ -60,6 +65,14 @@ export default async function AccountPage({ searchParams }: PageProps<"/cuenta">
         <h2 id="titulo-citas" className="text-lg font-semibold">
           Tus citas
         </h2>
+        <p className="mt-2 text-sm">
+          Saldo a favor: <strong data-testid="credit-balance">{formatCop(credit)}</strong>
+          {credit > 0 ? (
+            <span className="block text-muted-foreground">
+              Se aplica solo al anticipo de tu próxima cita.
+            </span>
+          ) : null}
+        </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Link href="/cuenta/citas" className={buttonVariants({ variant: "outline" })}>
             Ver mis citas

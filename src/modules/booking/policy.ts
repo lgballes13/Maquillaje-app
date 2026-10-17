@@ -49,8 +49,9 @@ export function policyPoints(rules: PolicyRules): string[] {
   if (deposit > 0) {
     points.push(
       `Tienes ${rules.booking_hold_minutes} minutos para pagar; si no, el horario se libera para otra persona.`,
-      `Si cancelas con al menos ${rules.free_cancellation_hours} horas de anticipación, tu anticipo queda como saldo a favor.`,
-      `Si no asistes, tienes ${rules.reschedule_window_hours} horas para reprogramar; se descuenta el ${penalty} % del anticipo y el resto queda abonado.`,
+      `Puedes cambiar el horario o cancelar sin costo hasta ${rules.free_cancellation_hours} horas antes de la cita. Si cancelas, tu anticipo queda como saldo a favor para tu próxima cita.`,
+      `Si cancelas con menos de ${rules.free_cancellation_hours} horas, se descuenta el ${penalty} % del anticipo y el resto queda como saldo a favor.`,
+      `Si no asistes, tienes ${rules.reschedule_window_hours} horas desde la hora de la cita para reprogramar: se descuenta el ${penalty} % del anticipo y el resto se abona a la nueva cita. Después de ese plazo pierdes el anticipo.`,
     );
   }
   return points;
@@ -70,6 +71,13 @@ const BOOKING_ERRORS: Record<string, string> = {
   not_found: "No encontramos esa cita.",
   hold_expired: "Se acabó el tiempo para pagar y el horario se liberó. Reserva de nuevo.",
   already_paid: "Esta cita ya está pagada.",
+  not_cancellable: "Esta cita ya no se puede cancelar.",
+  already_started: "La cita ya empezó; no se puede cancelar.",
+  not_reschedulable: "Esta cita no se puede reprogramar.",
+  too_late_to_reschedule:
+    "Faltan menos horas de las permitidas para cambiar el horario. Si no puedes asistir, cancela la cita.",
+  reschedule_window_closed: "Ya pasó el plazo para reprogramar esta cita.",
+  already_rescheduled: "Esta cita ya se reprogramó.",
 };
 
 /** Traduce el código de error de la base de datos a un mensaje para la clienta. */
@@ -85,6 +93,9 @@ export const APPOINTMENT_STATUS_LABELS = {
   confirmed: "Confirmada",
   expired: "Vencida (no se pagó a tiempo)",
   cancelled: "Cancelada",
+  completed: "Asistió",
+  no_show: "No asistió",
+  rescheduled: "Reprogramada",
 } as const;
 
 type AppointmentStatus = keyof typeof APPOINTMENT_STATUS_LABELS;
@@ -106,3 +117,94 @@ export function displayStatus(
   }
   return appointment.status;
 }
+
+const HOUR = 60 * 60 * 1000;
+
+export interface LifecycleRules {
+  free_cancellation_hours: number;
+  reschedule_window_hours: number;
+  reschedule_penalty_percent: number | string;
+}
+
+/** Penalidad redondeada hacia arriba al peso (igual que la base de datos). */
+export function penaltyFor(depositCop: number, penaltyPercent: number | string): number {
+  return depositFor(depositCop, penaltyPercent);
+}
+
+/**
+ * Qué pasa si la clienta cancela ahora. Es informativo: la base de datos
+ * (cancel_appointment) vuelve a calcularlo con la política que aceptó.
+ */
+export function cancellationPreview(
+  appointment: { starts_at: string; deposit_cop: number },
+  rules: LifecycleRules,
+  now: Date = new Date(),
+): { late: boolean; penalty: number; credit: number } {
+  const hoursLeft = (new Date(appointment.starts_at).getTime() - now.getTime()) / HOUR;
+  if (hoursLeft >= rules.free_cancellation_hours) {
+    return { late: false, penalty: 0, credit: appointment.deposit_cop };
+  }
+  const penalty = penaltyFor(appointment.deposit_cop, rules.reschedule_penalty_percent);
+  return { late: true, penalty, credit: appointment.deposit_cop - penalty };
+}
+
+export type AppointmentAction =
+  | { kind: "pay" }
+  | { kind: "change" }
+  | { kind: "cancel_only" }
+  | { kind: "reschedule_after_no_show"; credit: number; deadline: Date }
+  | { kind: "none" };
+
+/** Qué puede hacer la clienta con su cita en este momento. */
+export function availableAction(
+  appointment: {
+    status: AppointmentStatus;
+    starts_at: string;
+    deposit_cop: number;
+    hold_expires_at: string | null;
+    rescheduled: boolean;
+  },
+  rules: LifecycleRules,
+  now: Date = new Date(),
+): AppointmentAction {
+  const status = displayStatus(appointment, now);
+  const startsAt = new Date(appointment.starts_at).getTime();
+  if (status === "pending_payment") return { kind: "pay" };
+  if (status === "confirmed" && startsAt > now.getTime()) {
+    const late = (startsAt - now.getTime()) / HOUR < rules.free_cancellation_hours;
+    return late ? { kind: "cancel_only" } : { kind: "change" };
+  }
+  if (status === "no_show" && !appointment.rescheduled) {
+    const deadline = new Date(startsAt + rules.reschedule_window_hours * HOUR);
+    if (now.getTime() <= deadline.getTime()) {
+      const penalty = penaltyFor(appointment.deposit_cop, rules.reschedule_penalty_percent);
+      return {
+        kind: "reschedule_after_no_show",
+        credit: appointment.deposit_cop - penalty,
+        deadline,
+      };
+    }
+  }
+  return { kind: "none" };
+}
+
+/** Cuánto paga hoy la clienta: el anticipo menos el saldo a favor que alcance. */
+export function amountDueToday(
+  depositCop: number,
+  creditBalanceCop: number,
+): {
+  creditApplied: number;
+  due: number;
+} {
+  const creditApplied = Math.min(Math.max(creditBalanceCop, 0), depositCop);
+  return { creditApplied, due: depositCop - creditApplied };
+}
+
+export const CREDIT_REASON_LABELS = {
+  cancellation: "Cancelación con anticipación",
+  late_cancellation: "Cancelación tardía (con descuento)",
+  reschedule: "Cambio de horario",
+  no_show_reschedule: "Reprogramación después de no asistir (con descuento)",
+  applied_to_booking: "Usado en una reserva",
+  hold_released: "Devuelto: reserva sin pagar",
+} as const;

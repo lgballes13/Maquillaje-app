@@ -2,6 +2,7 @@ import "server-only";
 import { publicEnv } from "@/lib/env";
 import { getWompiSecrets } from "@/lib/env.server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendConfirmationEmail } from "@/modules/notifications/service";
 import { eventKey, wompiMode, type WompiMode, type WompiTransaction } from "./wompi";
 
 export interface WompiConfig {
@@ -41,7 +42,8 @@ export async function applyWompiTransaction(
   source: "webhook" | "api",
   transaction: WompiTransaction,
 ): Promise<string> {
-  const { data, error } = await createAdminClient().rpc("apply_payment_event", {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase.rpc("apply_payment_event", {
     p_source: source,
     p_event_key: eventKey(transaction),
     p_reference: transaction.reference,
@@ -52,5 +54,14 @@ export async function applyWompiTransaction(
     p_payment_method: transaction.payment_method_type ?? undefined,
   });
   if (error) throw new Error(`No se pudo aplicar el pago: ${error.message}`);
+
+  if (data === "confirmed" || data === "confirmed_late") {
+    const { data: payment } = await supabase
+      .from("payments")
+      .select("appointment_id")
+      .eq("reference", transaction.reference)
+      .maybeSingle();
+    if (payment) await sendConfirmationEmail(payment.appointment_id);
+  }
   return data;
 }

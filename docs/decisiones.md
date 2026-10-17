@@ -240,3 +240,51 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   30 minutos desde la apertura, y deben terminar antes del cierre.
 - Bloqueos de agenda (`blocked_periods`) para vacaciones o eventos; el motivo solo lo ve el admin.
 - La disponibilidad pública (`get_busy_periods`) solo expone inicio y fin, sin datos de nadie.
+
+## DT-023 · Saldo a favor como libro de movimientos
+
+**Fecha:** 2026-10-17 · **Estado:** vigente
+
+- Cada peso que entra o sale del saldo a favor es una fila en `credit_movements` (motivo, cita,
+  monto con signo). El saldo es la suma; nunca se guarda un total que se pueda editar.
+- Solo las funciones de la base de datos escriben movimientos; la clienta solo puede leer los
+  suyos (RLS) y la admin todos.
+- Las operaciones de una misma clienta se hacen en fila (`pg_advisory_xact_lock`), así dos
+  reservas simultáneas no pueden gastar el mismo saldo dos veces.
+- Al reservar, el saldo se aplica solo hasta el valor del anticipo. Si lo cubre, la cita queda
+  confirmada sin pasar por la pasarela. Si una reserva sin pagar vence o se libera, el saldo
+  aplicado vuelve.
+- El saldo no se devuelve en dinero desde la app; las devoluciones se hacen a mano.
+
+## DT-024 · Cancelar, cambiar de horario y no asistir
+
+**Fecha:** 2026-10-17 · **Estado:** vigente
+
+- Siempre se aplica la política que la clienta **aceptó al reservar** (`rules_version` de la
+  cita), no la vigente.
+- Cancelar con `free_cancellation_hours` o más de anticipación: todo el anticipo queda a favor.
+  Con menos: se descuenta `reschedule_penalty_percent` y el resto queda a favor (decisión de la
+  dueña del negocio, 2026-10-17).
+- Cambiar de horario solo con `free_cancellation_hours` o más de anticipación, sin costo. Con
+  menos horas solo se puede cancelar.
+- No asistió (lo marca la admin): la clienta tiene `reschedule_window_hours` desde la hora de la
+  cita para reprogramar; se descuenta el mismo porcentaje y el resto se abona a la nueva cita.
+  Después del plazo pierde el anticipo.
+- Reprogramar crea una **cita nueva** enlazada a la anterior (`rescheduled_from`) con el precio y
+  la política vigentes, que la clienta acepta otra vez. El anticipo anterior entra como saldo a
+  favor y se aplica a la nueva. Si el anticipo vigente es mayor, paga la diferencia; si es menor,
+  le sobra saldo. Cada cita se reprograma una sola vez.
+- El cambio es atómico: si el horario nuevo ya no está libre, la cita original queda igual.
+
+## DT-025 · Correos de citas y recordatorio diario
+
+**Fecha:** 2026-10-17 · **Estado:** vigente
+
+- Resend en producción; Mailpit (buzón de Supabase local) en desarrollo y CI.
+- Cada correo se «reserva» primero en la cita (`confirmation_sent_at`, `reminder_sent_at`) con
+  una actualización condicional, así no se envía dos veces aunque el webhook llegue repetido.
+- Un correo que falla nunca rompe el pago ni la reserva.
+- El recordatorio se envía **el día anterior a las 9 a. m.** (Colombia), no exactamente 24 horas
+  antes: el plan gratuito de Vercel solo permite tareas programadas una vez al día. Con el plan
+  Pro se puede pasar a cada hora sin cambiar el código de la app.
+- La ruta `/api/cron/recordatorios` exige `CRON_SECRET` (comparación de tiempo constante).
