@@ -44,3 +44,17 @@ select pg_temp.create_demo_user('33333333-3333-3333-3333-333333333333', 'cliente
 
 insert into public.user_roles (user_id, role, granted_by)
 values ('11111111-1111-1111-1111-111111111111', 'admin', null);
+
+-- Tienda: categorías y productos de ejemplo (solo en local; en producción los crea la admin).
+insert into public.product_categories (id, name, sort_order) values
+  ('aaaaaaaa-0000-4000-8000-000000000001', 'Labios', 1),
+  ('aaaaaaaa-0000-4000-8000-000000000002', 'Rostro', 2),
+  ('aaaaaaaa-0000-4000-8000-000000000003', 'Brochas', 3);
+
+insert into public.products (id, name, description, category_id, price_cop, stock, sort_order) values
+  ('bbbbbbbb-0000-4000-8000-000000000001', 'Labial líquido mate',
+   'Producto de ejemplo para pruebas.', 'aaaaaaaa-0000-4000-8000-000000000001', 45000, 1000, 1),
+  ('bbbbbbbb-0000-4000-8000-000000000002', 'Base de larga duración',
+   'Producto de ejemplo para pruebas.', 'aaaaaaaa-0000-4000-8000-000000000002', 89000, 1000, 2),
+  ('bbbbbbbb-0000-4000-8000-000000000003', 'Set de brochas',
+   'Producto de ejemplo para pruebas.', 'aaaaaaaa-0000-4000-8000-000000000003', 120000, 1000, 3);

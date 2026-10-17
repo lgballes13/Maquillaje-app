@@ -76,3 +76,44 @@ export function appointmentReminderEmail(data: AppointmentEmailData) {
     }),
   };
 }
+
+export interface OrderEmailData {
+  businessName: string;
+  customerName: string | null;
+  orderNumber: number;
+  items: { name: string; quantity: number; lineTotalCop: number }[];
+  subtotalCop: number;
+  shippingCop: number;
+  totalCop: number;
+  delivery: "pickup" | "shipping";
+  /** Dirección y ciudad (solo envío). */
+  address: string | null;
+  orderUrl: string;
+  whatsappNumber?: string;
+}
+
+export function orderPaidEmail(data: OrderEmailData) {
+  const subject = `Recibimos el pago de tu pedido #${data.orderNumber} · ${data.businessName}`;
+  const lines = [
+    greeting(data.customerName),
+    `Recibimos el pago de tu pedido #${data.orderNumber}.`,
+    ...data.items.map((item) => `${item.quantity} × ${item.name}: ${formatCop(item.lineTotalCop)}`),
+    data.shippingCop > 0
+      ? `Productos: ${formatCop(data.subtotalCop)}. Envío: ${formatCop(data.shippingCop)}. Total pagado: ${formatCop(data.totalCop)}.`
+      : `Total pagado: ${formatCop(data.totalCop)}.`,
+    data.delivery === "pickup"
+      ? "Te avisamos cuando esté listo para recoger en el estudio."
+      : `Lo enviamos a ${data.address ?? "la dirección que nos diste"}. Te avisamos cuando salga.`,
+    ...(data.whatsappNumber
+      ? [`¿Alguna pregunta? Escríbenos por WhatsApp al +${data.whatsappNumber}.`]
+      : []),
+  ];
+  return {
+    subject,
+    text: `${lines.join("\n\n")}\n\nVer mi pedido: ${data.orderUrl}`,
+    html: layout("Recibimos tu pago", lines.map(escapeHtml), {
+      label: "Ver mi pedido",
+      url: data.orderUrl,
+    }),
+  };
+}

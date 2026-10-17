@@ -94,6 +94,23 @@ export default async function AccountPage({ searchParams }: PageProps<"/cuenta">
         </div>
       </section>
 
+      <section
+        aria-labelledby="titulo-pedidos"
+        className="mt-6 rounded-xl border border-border bg-card p-5"
+      >
+        <h2 id="titulo-pedidos" className="text-lg font-semibold">
+          Tus pedidos
+        </h2>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link href="/cuenta/pedidos" className={buttonVariants({ variant: "outline" })}>
+            Ver mis pedidos
+          </Link>
+          <Link href="/tienda" className={buttonVariants()}>
+            Ir a la tienda
+          </Link>
+        </div>
+      </section>
+
       <form action={signOutAction} className="mt-6">
         <Button type="submit" variant="outline">
           Cerrar sesión

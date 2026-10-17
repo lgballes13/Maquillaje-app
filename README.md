@@ -96,7 +96,8 @@ src/
   components/     Componentes de React. ui/ = base de shadcn/ui; forms/ = campos de formulario
   config/         Configuración general del sitio y versión de la política de datos
   lib/            Lógica reutilizable (entorno, seguridad, Supabase, formularios)
-  modules/        Lógica por dominio: auth/ (cuentas y 2FA), admin/ (reglas del negocio)
+  modules/        Lógica por dominio: auth/ (cuentas y 2FA), admin/ (reglas del negocio),
+                  booking/ (citas), payments/ (Wompi), notifications/ (correos), shop/ (tienda)
   proxy.ts        Se ejecuta antes de cada página (CSP con nonce + renovar la sesión)
 supabase/
   migrations/     Cambios de la base de datos, en orden (nunca edites uno ya aplicado)
@@ -107,8 +108,7 @@ docs/             Estado del proyecto y decisiones técnicas
 .github/          Integración continua (GitHub Actions) y Dependabot
 ```
 
-En las próximas fases se agregan más módulos en `src/modules/` (citas, tienda,
-preventas, portafolio).
+En las próximas fases se agregan más módulos en `src/modules/` (preventas, portafolio).
 
 ## Variables de entorno
 
@@ -172,6 +172,16 @@ pago y correr las pruebas; el pago real no funciona con ellas. Para probar contr
    (Wompi no puede avisarle a `localhost`; en local, al volver del checkout la app consulta el
    resultado directamente en Wompi).
 4. Las tarjetas y datos de prueba están en la documentación de Wompi: <https://docs.wompi.co>.
+
+## Tienda y fotos de productos
+
+- Los productos, categorías y fotos se manejan en `/admin/productos`; los pedidos en
+  `/admin/pedidos`; la tarifa de envío en `/admin/reglas`.
+- Las fotos van al bucket público `productos` de Supabase Storage (lo crea la migración). JPG,
+  PNG o WebP de hasta 5 MB.
+- Los pagos de pedidos usan las mismas llaves y el mismo webhook de Wompi que las citas.
+- En local las fotos se muestran sin optimizar (Supabase local usa http); en producción
+  `next/image` las optimiza.
 
 ## Correos y recordatorios
 

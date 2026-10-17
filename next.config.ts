@@ -8,6 +8,13 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Nota: NO activamos cacheComponents (prerenderizado parcial) porque es
   // incompatible con la CSP con nonce. Ver docs/decisiones.md (DT-004).
+  experimental: {
+    serverActions: {
+      // Fotos de productos de hasta 5 MB (más el margen del formulario).
+      bodySizeLimit: "6mb",
+    },
+  },
+  // En local las fotos llegan por http y se muestran sin optimizar (src/modules/shop/images.ts).
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: process.env.NEXT_PUBLIC_SUPABASE_URL

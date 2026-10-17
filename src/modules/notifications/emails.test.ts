@@ -3,7 +3,9 @@ import {
   appointmentConfirmedEmail,
   appointmentReminderEmail,
   escapeHtml,
+  orderPaidEmail,
   type AppointmentEmailData,
+  type OrderEmailData,
 } from "./emails";
 
 const data: AppointmentEmailData = {
@@ -55,5 +57,46 @@ describe("appointmentReminderEmail", () => {
     expect(appointmentReminderEmail({ ...data, customerName: null }).text.startsWith("Hola:")).toBe(
       true,
     );
+  });
+});
+
+describe("orderPaidEmail", () => {
+  const order: OrderEmailData = {
+    businessName: "Estudio de Prueba",
+    customerName: "Ana <b>",
+    orderNumber: 1024,
+    items: [
+      { name: "Labial <mate>", quantity: 2, lineTotalCop: 90000 },
+      { name: "Set de brochas", quantity: 1, lineTotalCop: 120000 },
+    ],
+    subtotalCop: 210000,
+    shippingCop: 15000,
+    totalCop: 225000,
+    delivery: "shipping",
+    address: "Calle 10 # 20-30, Medellín",
+    orderUrl: "https://ejemplo.com/pedidos/abc",
+  };
+
+  it("incluye número, productos, envío, total y enlace", () => {
+    const email = orderPaidEmail(order);
+    expect(email.subject).toContain("#1024");
+    expect(email.text).toContain("2 × Labial <mate>");
+    expect(email.text).toMatch(/Envío: \$\s?15\.000/);
+    expect(email.text).toMatch(/Total pagado: \$\s?225\.000/);
+    expect(email.text).toContain("Calle 10 # 20-30, Medellín");
+    expect(email.text).toContain(order.orderUrl);
+  });
+
+  it("escapa en el HTML los datos que vienen de la base", () => {
+    const { html } = orderPaidEmail(order);
+    expect(html).toContain("Labial &lt;mate&gt;");
+    expect(html).not.toContain("<mate>");
+    expect(html).toContain("Ana &lt;b&gt;");
+  });
+
+  it("para recoger avisa que se notificará cuando esté listo", () => {
+    const email = orderPaidEmail({ ...order, delivery: "pickup", shippingCop: 0, address: null });
+    expect(email.text).toContain("listo para recoger");
+    expect(email.text).not.toContain("Envío:");
   });
 });

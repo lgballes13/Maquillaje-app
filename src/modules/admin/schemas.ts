@@ -32,6 +32,7 @@ export const businessRulesSchema = z.object({
   booking_hold_minutes: integer("Tiempo para pagar", 5, 30),
   min_booking_notice_hours: integer("Anticipación mínima", 0, 720),
   max_booking_days_ahead: integer("Días hacia adelante", 1, 365),
+  shipping_fee_cop: integer("Tarifa de envío", 0, 1_000_000),
   change_reason: z
     .string()
     .trim()

@@ -303,3 +303,56 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   reserva de la clienta) escribe además el movimiento «Vencido», para que el historial cuadre.
 - Caso raro: si un pago tardío necesita saldo que ya se usó o venció, queda una «deuda» negativa
   y la cita se marca «por revisar».
+
+## DT-027 · Stock de la tienda: apartar al ir a pagar, descontar al aprobar
+
+**Fecha:** 2026-10-17 · **Estado:** vigente
+
+- `products.stock` son las unidades físicas en el estudio. Disponible = stock − unidades de
+  pedidos sin pagar que todavía están a tiempo (`get_product_availability`).
+- `create_order` bloquea las filas de los productos (`FOR UPDATE`, siempre en el mismo orden para
+  no trabarse) y revisa el disponible antes de apartar: dos clientas nunca se llevan la misma
+  última unidad.
+- El tiempo para pagar es el mismo de las citas (`booking_hold_minutes`, hoy 10 minutos). Si no
+  paga, el pedido vence y las unidades se liberan solas.
+- Al aprobarse el pago se descuentan las unidades del stock. Una clienta tiene un solo pedido sin
+  pagar: si hace otro, el anterior se cancela.
+- El carrito vive en el navegador (localStorage) y solo guarda productos y cantidades; precios,
+  stock, envío y total los calcula siempre el servidor.
+
+## DT-028 · Pagos de pedidos con la misma pasarela que las citas
+
+**Fecha:** 2026-10-17 · **Estado:** vigente
+
+- Mismo flujo firmado de Wompi (DT-018). Las referencias de pedidos empiezan por `PED-` y las de
+  citas por `CITA-`; el webhook envía cada una a su función (`apply_order_payment_event` o
+  `apply_payment_event`). La idempotencia (`payment_events`) es compartida.
+- Pago aprobado a tiempo → pedido «pagado» y correo de confirmación (una sola vez).
+- Pago aprobado tarde: si todavía hay unidades, se descuentan y el pedido queda pagado; si no
+  alcanzan, el pedido queda «por revisar» para devolver el dinero a mano.
+- La admin avanza el pedido: pagado → listo para recoger / enviado → entregado. Si cancela un
+  pedido pagado, las unidades vuelven al stock y el pedido queda «por revisar» (la devolución se
+  hace en el panel de Wompi; las devoluciones automáticas no están en el alcance).
+
+## DT-029 · Entrega: recoger en el estudio o envío con tarifa fija
+
+**Fecha:** 2026-10-17 · **Estado:** vigente (decisión de la dueña: «Recoger y envío»)
+
+- La tarifa de envío es una regla más del panel (`shipping_fee_cop`, hoy $15.000 provisional;
+  0 = envío gratis). Cambiarla crea una versión nueva de las reglas: un pedido hecho con la
+  tarifa vieja se rechaza con «las condiciones cambiaron» para que la clienta vea el total real.
+- El total con envío se muestra antes de pagar (Ley 1480). No hay tarifas por ciudad ni
+  integración con transportadoras.
+
+## DT-030 · Fotos de productos
+
+**Fecha:** 2026-10-17 · **Estado:** vigente
+
+- Bucket público `productos` de Supabase Storage (cualquiera ve las fotos; solo la admin con 2FA
+  las sube o borra, por reglas de la base). Límite de 5 MB; JPG, PNG o WebP.
+- La subida pasa por una server action: se revisa el tipo real del archivo por sus primeros
+  bytes (no por el nombre), el tamaño y un límite de intentos; el nombre del archivo lo pone el
+  servidor. Máximo 8 fotos por producto, cada una con su descripción para lectores de pantalla.
+- `next/image` optimiza las fotos en producción (https). En local Supabase usa
+  `http://127.0.0.1`, que el optimizador bloquea por seguridad, así que ahí se muestran sin
+  optimizar (`src/modules/shop/images.ts`).
