@@ -1,6 +1,12 @@
 import "server-only";
 import { siteConfig } from "@/config/site";
-import { addDays, toZonedDateString, weekdayOf, zonedDateTimeToUtc } from "@/lib/time";
+import {
+  addDays,
+  isDateString,
+  toZonedDateString,
+  weekdayOf,
+  zonedDateTimeToUtc,
+} from "@/lib/time";
 import { createClient } from "@/lib/supabase/server";
 import { computeSlots, type Slot } from "./slots";
 
@@ -47,6 +53,24 @@ export function bookingDateRange(maxDaysAhead: number, now = new Date()) {
   return { today, last: addDays(today, maxDaysAhead) };
 }
 
+/** Fecha pedida en ?fecha= si es válida y está dentro del rango; si no, hoy. */
+export function resolveBookingDate(requested: unknown, range: { today: string; last: string }) {
+  return typeof requested === "string" &&
+    isDateString(requested) &&
+    requested >= range.today &&
+    requested <= range.last
+    ? requested
+    : range.today;
+}
+
+/** Saldo a favor de la clienta con sesión (0 si no tiene). */
+export async function getMyCreditBalance(): Promise<number> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("my_credit_balance");
+  if (error) throw new Error(`No se pudo consultar el saldo a favor: ${error.message}`);
+  return data ?? 0;
+}
+
 /** Horarios libres de un servicio en una fecha (hora del negocio). */
 export async function getSlotsForDate(
   service: { duration_minutes: number },
@@ -83,4 +107,32 @@ export async function getSlotsForDate(
     busy: busy.map((b) => ({ start: new Date(b.starts_at), end: new Date(b.ends_at) })),
     now: new Date(),
   });
+}
+
+/**
+ * Una cita de la clienta (RLS: solo la propia, o cualquiera si es admin), con
+ * la política que aceptó al reservar y si ya se reprogramó.
+ */
+export async function getAppointmentWithPolicy(id: string) {
+  const supabase = await createClient();
+  const { data: appointment } = await supabase
+    .from("appointments")
+    .select(
+      "id, service_id, service_name, duration_minutes, price_cop, deposit_cop, deposit_percent, credit_applied_cop, rules_version, starts_at, status, hold_expires_at, customer_notes, rescheduled_from",
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (!appointment) return null;
+
+  const [{ data: rules }, { data: next }] = await Promise.all([
+    supabase
+      .from("business_rules")
+      .select("free_cancellation_hours, reschedule_window_hours, reschedule_penalty_percent")
+      .eq("version", appointment.rules_version)
+      .single(),
+    supabase.from("appointments").select("id").eq("rescheduled_from", id).maybeSingle(),
+  ]);
+  if (!rules) throw new Error("No se encontró la política aceptada en la cita");
+
+  return { appointment, rules, rescheduled: next !== null, rescheduledTo: next?.id ?? null };
 }

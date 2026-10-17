@@ -4,17 +4,20 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
-import { formatClock, formatFullDateTime } from "@/lib/format";
+import { formatClock, formatDateTime, formatFullDateTime } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { requireUser } from "@/modules/auth/session";
 import {
   APPOINTMENT_STATUS_LABELS,
+  availableAction,
   bookingErrorMessage,
+  CREDIT_REASON_LABELS,
   displayStatus,
   formatCop,
   formatDuration,
 } from "@/modules/booking/policy";
+import { getAppointmentWithPolicy } from "@/modules/booking/queries";
 import { applyWompiTransaction, getWompiConfig } from "@/modules/payments/service";
 import {
   checkoutFields,
@@ -29,20 +32,10 @@ const STATUS_STYLES = {
   confirmed: "border-emerald-700/30 bg-emerald-50 text-emerald-900",
   expired: "border-border bg-muted text-muted-foreground",
   cancelled: "border-border bg-muted text-muted-foreground",
+  completed: "border-emerald-700/30 bg-emerald-50 text-emerald-900",
+  no_show: "border-amber-700/30 bg-amber-50 text-amber-900",
+  rescheduled: "border-border bg-muted text-muted-foreground",
 } as const;
-
-async function loadAppointment(id: string) {
-  const supabase = await createClient();
-  // RLS: solo devuelve la cita si es de la clienta (o si es admin).
-  const { data } = await supabase
-    .from("appointments")
-    .select(
-      "id, service_name, duration_minutes, price_cop, deposit_cop, deposit_percent, rules_version, starts_at, status, hold_expires_at, customer_notes",
-    )
-    .eq("id", id)
-    .maybeSingle();
-  return data;
-}
 
 /**
  * Wompi devuelve a la clienta con ?id=<transacción>. Si el webhook aún no ha
@@ -77,23 +70,32 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
   if (!z.uuid().safeParse(id).success) notFound();
   const user = await requireUser(`/citas/${id}`);
 
-  let appointment = await loadAppointment(id);
-  if (!appointment) notFound();
+  // RLS: solo devuelve la cita si es de la clienta (o si es admin).
+  let loaded = await getAppointmentWithPolicy(id);
+  if (!loaded) notFound();
 
   const transactionId = typeof query.id === "string" ? query.id : undefined;
-  if (transactionId && appointment.status !== "confirmed") {
+  if (transactionId && loaded.appointment.status !== "confirmed") {
     await reconcileFromRedirect(id, transactionId);
-    appointment = (await loadAppointment(id)) ?? appointment;
+    loaded = (await getAppointmentWithPolicy(id)) ?? loaded;
   }
+  const { appointment, rules, rescheduled, rescheduledTo } = loaded;
 
   const supabase = await createClient();
-  const { data: lastPayment } = await supabase
-    .from("payments")
-    .select("status, provider_transaction_id")
-    .eq("appointment_id", id)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [{ data: lastPayment }, { data: creditMovements }] = await Promise.all([
+    supabase
+      .from("payments")
+      .select("status, provider_transaction_id")
+      .eq("appointment_id", id)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("credit_movements")
+      .select("id, amount_cop, reason, created_at")
+      .eq("appointment_id", id)
+      .order("created_at"),
+  ]);
 
   // Datos del botón de pago (solo si la cita espera el anticipo).
   const wompi = getWompiConfig();
@@ -124,6 +126,8 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
   }
 
   const status = displayStatus(appointment);
+  const action = availableAction({ ...appointment, rescheduled }, rules);
+  const amountDue = appointment.deposit_cop - appointment.credit_applied_cop;
   const declined =
     status === "pending_payment" &&
     (lastPayment?.status === "declined" || lastPayment?.status === "error");
@@ -173,6 +177,14 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
               {formatCop(appointment.deposit_cop)}
             </dd>
           </div>
+          {appointment.credit_applied_cop > 0 ? (
+            <div>
+              <dt className="text-muted-foreground">Pagado con saldo a favor</dt>
+              <dd className="font-medium" data-testid="credit-applied">
+                {formatCop(appointment.credit_applied_cop)}
+              </dd>
+            </div>
+          ) : null}
           {appointment.customer_notes ? (
             <div className="sm:col-span-2">
               <dt className="text-muted-foreground">Tus notas</dt>
@@ -224,7 +236,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
                 <input key={name} type="hidden" name={name} value={value} />
               ))}
               <Button type="submit" size="lg" className="w-full sm:w-auto">
-                Pagar {formatCop(appointment.deposit_cop)} con Wompi
+                Pagar {formatCop(amountDue)} con Wompi
               </Button>
               <p className="mt-2 text-xs text-muted-foreground">
                 Tarjeta, PSE, Nequi y otros medios. Wompi procesa el pago; nosotros no vemos los
@@ -236,6 +248,97 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
               {paymentError}
             </p>
           )}
+        </section>
+      ) : null}
+
+      {action.kind === "change" || action.kind === "cancel_only" ? (
+        <section
+          aria-labelledby="titulo-cambios"
+          className="mt-6 rounded-xl border border-border bg-card p-5"
+        >
+          <h2 id="titulo-cambios" className="text-lg font-semibold">
+            ¿Necesitas un cambio?
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {action.kind === "change"
+              ? `Puedes cambiar el horario o cancelar sin costo hasta ${rules.free_cancellation_hours} horas antes de la cita.`
+              : `Faltan menos de ${rules.free_cancellation_hours} horas: ya no se puede cambiar el horario. Si cancelas, se descuenta el ${Number(rules.reschedule_penalty_percent)} % del anticipo.`}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {action.kind === "change" ? (
+              <Link href={`/citas/${id}/reprogramar`} className={buttonVariants()}>
+                Cambiar horario
+              </Link>
+            ) : null}
+            <Link href={`/citas/${id}/cancelar`} className={buttonVariants({ variant: "outline" })}>
+              Cancelar cita
+            </Link>
+          </div>
+        </section>
+      ) : null}
+
+      {action.kind === "reschedule_after_no_show" ? (
+        <section
+          aria-labelledby="titulo-reprogramar"
+          className="mt-6 rounded-xl border border-border bg-card p-5"
+        >
+          <h2 id="titulo-reprogramar" className="text-lg font-semibold">
+            ¿Quieres reprogramar?
+          </h2>
+          <p className="mt-2 text-sm">
+            Tienes hasta el{" "}
+            <strong className="inline-block">{formatFullDateTime(action.deadline)}</strong> para
+            elegir un horario nuevo. Abonamos {formatCop(action.credit)} de tu anticipo a la nueva
+            cita.
+          </p>
+          <Link href={`/citas/${id}/reprogramar`} className={buttonVariants({ className: "mt-4" })}>
+            Reprogramar
+          </Link>
+        </section>
+      ) : null}
+
+      {rescheduledTo ? (
+        <p className="mt-6 text-sm">
+          Esta cita se cambió por otro horario.{" "}
+          <Link
+            href={`/citas/${rescheduledTo}`}
+            className="font-medium text-primary underline underline-offset-4"
+          >
+            Ver la cita nueva
+          </Link>
+        </p>
+      ) : null}
+
+      {creditMovements?.length ? (
+        <section
+          aria-labelledby="titulo-saldo"
+          className="mt-6 rounded-xl border border-border bg-card p-5"
+        >
+          <h2 id="titulo-saldo" className="text-lg font-semibold">
+            Saldo a favor
+          </h2>
+          <ul className="mt-3 grid gap-2 text-sm" data-testid="credit-movements">
+            {creditMovements.map((m) => (
+              <li key={m.id} className="flex flex-wrap justify-between gap-2">
+                <span>
+                  {CREDIT_REASON_LABELS[m.reason]}
+                  <span className="block text-xs text-muted-foreground">
+                    {formatDateTime(m.created_at)}
+                  </span>
+                </span>
+                <span className="font-medium">
+                  {m.amount_cop > 0 ? "+" : "−"}
+                  {formatCop(Math.abs(m.amount_cop))}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <Link
+            href="/cuenta"
+            className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary underline underline-offset-4"
+          >
+            Ver mi saldo
+          </Link>
         </section>
       ) : null}
 

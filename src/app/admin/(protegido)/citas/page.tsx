@@ -5,7 +5,7 @@ import { siteConfig } from "@/config/site";
 import { formatDateTime } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { toZonedDateString } from "@/lib/time";
-import { deleteBlockAction } from "@/modules/admin/actions";
+import { deleteBlockAction, markAttendanceAction } from "@/modules/admin/actions";
 import { BlockForm } from "@/modules/admin/components/block-form";
 import { APPOINTMENT_STATUS_LABELS, formatCop } from "@/modules/booking/policy";
 
@@ -24,7 +24,7 @@ export default async function AdminAppointmentsPage() {
   const since = hoursAgoIso(24);
   const nowIso = hoursAgoIso(0);
 
-  const [{ data: appointments }, { data: blocks }] = await Promise.all([
+  const [{ data: appointments }, { data: blocks }, { data: toMark }] = await Promise.all([
     supabase
       .from("appointments")
       .select(
@@ -39,6 +39,14 @@ export default async function AdminAppointmentsPage() {
       .select("id, starts_at, ends_at, reason")
       .gte("ends_at", nowIso)
       .order("starts_at"),
+    // Citas confirmadas que ya empezaron: falta decir si la clienta asistió.
+    supabase
+      .from("appointments")
+      .select("id, customer_id, service_name, starts_at")
+      .eq("status", "confirmed")
+      .lte("starts_at", nowIso)
+      .order("starts_at")
+      .limit(50),
   ]);
 
   // Citas con algo por revisar (ej.: pago aprobado tarde), sin importar su estado.
@@ -49,7 +57,9 @@ export default async function AdminAppointmentsPage() {
     .order("starts_at")
     .limit(50);
 
-  const customerIds = [...new Set(appointments?.map((a) => a.customer_id) ?? [])];
+  const customerIds = [
+    ...new Set([...(appointments ?? []), ...(toMark ?? [])].map((a) => a.customer_id)),
+  ];
   const { data: profiles } = customerIds.length
     ? await supabase.from("profiles").select("id, full_name, phone").in("id", customerIds)
     : { data: [] };
@@ -72,6 +82,45 @@ export default async function AdminAppointmentsPage() {
             {toReview.map((a) => (
               <li key={a.id}>
                 <strong>{a.service_name}</strong> · {formatDateTime(a.starts_at)}: {a.review_note}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {toMark?.length ? (
+        <section
+          aria-labelledby="titulo-asistencia"
+          className="mt-6 rounded-xl border border-border bg-card p-5"
+        >
+          <h2 id="titulo-asistencia" className="text-lg font-semibold">
+            Por marcar asistencia
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Si marcas «No asistió», la clienta tiene un plazo para reprogramar según la política que
+            aceptó.
+          </p>
+          <ul className="mt-4 grid gap-2" aria-label="Citas por marcar asistencia">
+            {toMark.map((a) => (
+              <li
+                key={a.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3 text-sm"
+              >
+                <span>
+                  <strong>{a.service_name}</strong> · {formatDateTime(a.starts_at)}
+                  <span className="block text-muted-foreground">
+                    {profileById.get(a.customer_id)?.full_name ?? "—"}
+                  </span>
+                </span>
+                <form action={markAttendanceAction} className="flex gap-2">
+                  <input type="hidden" name="id" value={a.id} />
+                  <Button type="submit" name="attended" value="true" size="sm">
+                    Asistió
+                  </Button>
+                  <Button type="submit" name="attended" value="false" variant="outline" size="sm">
+                    No asistió
+                  </Button>
+                </form>
               </li>
             ))}
           </ul>

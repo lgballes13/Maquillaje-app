@@ -50,3 +50,33 @@ export function getWompiSecrets(): WompiSecrets | null {
   }
   return result.data;
 }
+
+const emailSchema = z.object({
+  // Resend (producción). Si falta, en local se usa Mailpit y si tampoco hay, no se envía nada.
+  RESEND_API_KEY: z.string().startsWith("re_").optional(),
+  // Remitente, ej.: "Estudio de Maquillaje <citas@tudominio.com>" (dominio verificado en Resend).
+  EMAIL_FROM: z.string().min(3).optional(),
+  // Buzón de pruebas de Supabase local (solo desarrollo y CI).
+  MAILPIT_URL: z.url().optional(),
+});
+
+export type EmailEnv = z.infer<typeof emailSchema>;
+
+export function getEmailEnv(): EmailEnv {
+  const result = emailSchema.safeParse({
+    RESEND_API_KEY: process.env.RESEND_API_KEY || undefined,
+    EMAIL_FROM: process.env.EMAIL_FROM || undefined,
+    MAILPIT_URL: process.env.MAILPIT_URL || undefined,
+  });
+  if (!result.success) {
+    console.error("Variables de correo inválidas (ver .env.example).");
+    return {};
+  }
+  return result.data;
+}
+
+/** Secreto que Vercel Cron envía para llamar a las tareas programadas. */
+export function getCronSecret(): string | null {
+  const secret = process.env.CRON_SECRET;
+  return secret && secret.length >= 16 ? secret : null;
+}

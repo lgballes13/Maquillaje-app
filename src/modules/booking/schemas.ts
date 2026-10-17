@@ -18,3 +18,13 @@ export const bookingSchema = z.object({
 });
 
 export type BookingInput = z.infer<typeof bookingSchema>;
+
+export const appointmentIdSchema = z.object({ appointmentId: z.uuid("Cita inválida") });
+
+/** Cambiar de horario: la cita, la hora nueva y la política vigente aceptada. */
+export const rescheduleSchema = z.object({
+  appointmentId: z.uuid("Cita inválida"),
+  startsAt: z.iso.datetime({ offset: true, message: "Horario inválido" }),
+  rulesVersion: z.coerce.number().int().positive(),
+  acceptPolicy: z.literal("on", { message: "Debes aceptar la política de citas para continuar" }),
+});

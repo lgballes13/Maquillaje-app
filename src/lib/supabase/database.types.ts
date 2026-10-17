@@ -25,10 +25,13 @@ export type Database = {
     Tables: {
       appointments: {
         Row: {
+          attendance_marked_at: string | null;
           blocked_until: string;
           cancelled_at: string | null;
+          confirmation_sent_at: string | null;
           confirmed_at: string | null;
           created_at: string;
+          credit_applied_cop: number;
           customer_id: string;
           customer_notes: string | null;
           deposit_cop: number;
@@ -41,6 +44,8 @@ export type Database = {
           period: unknown;
           policy_accepted_at: string;
           price_cop: number;
+          reminder_sent_at: string | null;
+          rescheduled_from: string | null;
           review_note: string | null;
           rules_version: number;
           service_id: string;
@@ -51,10 +56,13 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          attendance_marked_at?: string | null;
           blocked_until: string;
           cancelled_at?: string | null;
+          confirmation_sent_at?: string | null;
           confirmed_at?: string | null;
           created_at?: string;
+          credit_applied_cop?: number;
           customer_id: string;
           customer_notes?: string | null;
           deposit_cop: number;
@@ -67,6 +75,8 @@ export type Database = {
           period?: never;
           policy_accepted_at: string;
           price_cop: number;
+          reminder_sent_at?: string | null;
+          rescheduled_from?: string | null;
           review_note?: string | null;
           rules_version: number;
           service_id: string;
@@ -76,10 +86,13 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          attendance_marked_at?: string | null;
           blocked_until?: string;
           cancelled_at?: string | null;
+          confirmation_sent_at?: string | null;
           confirmed_at?: string | null;
           created_at?: string;
+          credit_applied_cop?: number;
           customer_id?: string;
           customer_notes?: string | null;
           deposit_cop?: number;
@@ -92,6 +105,8 @@ export type Database = {
           period?: never;
           policy_accepted_at?: string;
           price_cop?: number;
+          reminder_sent_at?: string | null;
+          rescheduled_from?: string | null;
           review_note?: string | null;
           rules_version?: number;
           service_id?: string;
@@ -101,6 +116,13 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "appointments_rescheduled_from_fkey";
+            columns: ["rescheduled_from"];
+            isOneToOne: false;
+            referencedRelation: "appointments";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "appointments_rules_version_fkey";
             columns: ["rules_version"];
@@ -258,6 +280,45 @@ export type Database = {
           version?: never;
         };
         Relationships: [];
+      };
+      credit_movements: {
+        Row: {
+          amount_cop: number;
+          appointment_id: string | null;
+          created_at: string;
+          created_by: string | null;
+          customer_id: string;
+          id: number;
+          reason: Database["public"]["Enums"]["credit_reason"];
+        };
+        ComputedFields: never;
+        Insert: {
+          amount_cop: number;
+          appointment_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          customer_id: string;
+          id?: never;
+          reason: Database["public"]["Enums"]["credit_reason"];
+        };
+        Update: {
+          amount_cop?: number;
+          appointment_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          customer_id?: string;
+          id?: never;
+          reason?: Database["public"]["Enums"]["credit_reason"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "credit_movements_appointment_id_fkey";
+            columns: ["appointment_id"];
+            isOneToOne: false;
+            referencedRelation: "appointments";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       payment_events: {
         Row: {
@@ -464,6 +525,7 @@ export type Database = {
         };
         Returns: string;
       };
+      cancel_appointment: { Args: { p_appointment_id: string }; Returns: number };
       consume_rate_limit: {
         Args: { p_key: string; p_limit: number; p_window_seconds: number };
         Returns: boolean;
@@ -486,6 +548,11 @@ export type Database = {
       };
       has_role: { Args: { p_role: Database["public"]["Enums"]["app_role"] }; Returns: boolean };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      mark_attendance: {
+        Args: { p_appointment_id: string; p_attended: boolean };
+        Returns: undefined;
+      };
+      my_credit_balance: { Args: Record<PropertyKey, never>; Returns: number };
       prepare_appointment_payment: {
         Args: { p_appointment_id: string };
         Returns: {
@@ -494,10 +561,28 @@ export type Database = {
           reference: string;
         }[];
       };
+      reschedule_appointment: {
+        Args: { p_appointment_id: string; p_rules_version: number; p_starts_at: string };
+        Returns: string;
+      };
     };
     Enums: {
       app_role: "admin" | "artist";
-      appointment_status: "pending_payment" | "confirmed" | "expired" | "cancelled";
+      appointment_status:
+        | "pending_payment"
+        | "confirmed"
+        | "expired"
+        | "cancelled"
+        | "completed"
+        | "no_show"
+        | "rescheduled";
+      credit_reason:
+        | "cancellation"
+        | "late_cancellation"
+        | "reschedule"
+        | "no_show_reschedule"
+        | "applied_to_booking"
+        | "hold_released";
       payment_status: "pending" | "approved" | "declined" | "voided" | "error";
     };
     CompositeTypes: {
@@ -614,7 +699,23 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "artist"],
-      appointment_status: ["pending_payment", "confirmed", "expired", "cancelled"],
+      appointment_status: [
+        "pending_payment",
+        "confirmed",
+        "expired",
+        "cancelled",
+        "completed",
+        "no_show",
+        "rescheduled",
+      ],
+      credit_reason: [
+        "cancellation",
+        "late_cancellation",
+        "reschedule",
+        "no_show_reschedule",
+        "applied_to_booking",
+        "hold_released",
+      ],
       payment_status: ["pending", "approved", "declined", "voided", "error"],
     },
   },

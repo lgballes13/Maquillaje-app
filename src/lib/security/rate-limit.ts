@@ -17,6 +17,8 @@ export const RATE_LIMITS = {
   "mfa:user": { limit: 5, windowSeconds: 5 * 60 },
   // Reservas: evita que alguien aparte horarios en masa para bloquear la agenda.
   "booking:user": { limit: 10, windowSeconds: 60 * 60 },
+  // Cancelar y cambiar de horario.
+  "appointment:user": { limit: 20, windowSeconds: 60 * 60 },
 } as const;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

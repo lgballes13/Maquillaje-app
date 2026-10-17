@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  amountDueToday,
+  availableAction,
+  cancellationPreview,
+  penaltyFor,
   bookingErrorMessage,
   depositFor,
   displayStatus,
@@ -88,5 +92,137 @@ describe("displayStatus", () => {
       displayStatus({ status: "pending_payment", hold_expires_at: "2026-10-20T15:05:00Z" }, now),
     ).toBe("pending_payment");
     expect(displayStatus({ status: "confirmed", hold_expires_at: null }, now)).toBe("confirmed");
+  });
+});
+
+const lifecycle = {
+  free_cancellation_hours: 48,
+  reschedule_window_hours: 24,
+  reschedule_penalty_percent: 30,
+};
+const HOUR = 60 * 60 * 1000;
+const NOW = new Date("2026-10-20T15:00:00Z");
+const inHours = (h: number) => new Date(NOW.getTime() + h * HOUR).toISOString();
+
+describe("penaltyFor", () => {
+  it("redondea hacia arriba al peso, como la base de datos", () => {
+    expect(penaltyFor(90000, 30)).toBe(27000);
+    expect(penaltyFor(55001, 30)).toBe(16501);
+  });
+});
+
+describe("cancellationPreview", () => {
+  it("con anticipación, todo el anticipo queda a favor", () => {
+    expect(
+      cancellationPreview({ starts_at: inHours(48), deposit_cop: 90000 }, lifecycle, NOW),
+    ).toEqual({ late: false, penalty: 0, credit: 90000 });
+  });
+
+  it("tarde, se descuenta el porcentaje y el resto queda a favor", () => {
+    expect(
+      cancellationPreview({ starts_at: inHours(47.9), deposit_cop: 90000 }, lifecycle, NOW),
+    ).toEqual({ late: true, penalty: 27000, credit: 63000 });
+  });
+});
+
+describe("availableAction", () => {
+  const base = {
+    deposit_cop: 90000,
+    hold_expires_at: null,
+    rescheduled: false,
+  };
+
+  it("pendiente de pago: pagar", () => {
+    expect(
+      availableAction(
+        {
+          ...base,
+          status: "pending_payment",
+          starts_at: inHours(72),
+          hold_expires_at: inHours(0.1),
+        },
+        lifecycle,
+        NOW,
+      ),
+    ).toEqual({ kind: "pay" });
+  });
+
+  it("pendiente con el tiempo vencido: nada", () => {
+    expect(
+      availableAction(
+        {
+          ...base,
+          status: "pending_payment",
+          starts_at: inHours(72),
+          hold_expires_at: inHours(-0.1),
+        },
+        lifecycle,
+        NOW,
+      ).kind,
+    ).toBe("none");
+  });
+
+  it("confirmada con anticipación: cambiar o cancelar", () => {
+    expect(
+      availableAction({ ...base, status: "confirmed", starts_at: inHours(48) }, lifecycle, NOW)
+        .kind,
+    ).toBe("change");
+  });
+
+  it("confirmada con menos de 48 h: solo cancelar", () => {
+    expect(
+      availableAction({ ...base, status: "confirmed", starts_at: inHours(5) }, lifecycle, NOW).kind,
+    ).toBe("cancel_only");
+  });
+
+  it("confirmada que ya empezó: nada", () => {
+    expect(
+      availableAction({ ...base, status: "confirmed", starts_at: inHours(-1) }, lifecycle, NOW)
+        .kind,
+    ).toBe("none");
+  });
+
+  it("no asistió dentro del plazo: reprogramar con el anticipo menos la penalidad", () => {
+    const startsAt = inHours(-23);
+    expect(
+      availableAction({ ...base, status: "no_show", starts_at: startsAt }, lifecycle, NOW),
+    ).toEqual({
+      kind: "reschedule_after_no_show",
+      credit: 63000,
+      deadline: new Date(new Date(startsAt).getTime() + 24 * HOUR),
+    });
+  });
+
+  it("no asistió fuera del plazo, o ya reprogramada: nada", () => {
+    expect(
+      availableAction({ ...base, status: "no_show", starts_at: inHours(-25) }, lifecycle, NOW).kind,
+    ).toBe("none");
+    expect(
+      availableAction(
+        { ...base, status: "no_show", starts_at: inHours(-2), rescheduled: true },
+        lifecycle,
+        NOW,
+      ).kind,
+    ).toBe("none");
+  });
+
+  it("canceladas, vencidas, reprogramadas y atendidas: nada", () => {
+    for (const status of ["cancelled", "expired", "rescheduled", "completed"] as const) {
+      expect(
+        availableAction({ ...base, status, starts_at: inHours(72) }, lifecycle, NOW).kind,
+      ).toBe("none");
+    }
+  });
+});
+
+describe("amountDueToday", () => {
+  it("el saldo cubre lo que alcance del anticipo", () => {
+    expect(amountDueToday(90000, 0)).toEqual({ creditApplied: 0, due: 90000 });
+    expect(amountDueToday(90000, 63000)).toEqual({ creditApplied: 63000, due: 27000 });
+    expect(amountDueToday(90000, 153000)).toEqual({ creditApplied: 90000, due: 0 });
+  });
+
+  it("un saldo negativo no aumenta el cobro", () => {
+    expect(amountDueToday(90000, -5000)).toEqual({ creditApplied: 0, due: 90000 });
   });
 });

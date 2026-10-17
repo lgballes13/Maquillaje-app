@@ -1,5 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 import { loadEnvConfig } from "@next/env";
+import { CRON_SECRET_TEST } from "./e2e/helpers/cron";
 import { WOMPI_TEST } from "./e2e/helpers/wompi";
 
 // Carga .env.local (claves de Supabase local) igual que lo hace Next.js.
@@ -63,6 +64,9 @@ export default defineConfig({
       NEXT_PUBLIC_WOMPI_PUBLIC_KEY: WOMPI_TEST.publicKey,
       WOMPI_INTEGRITY_SECRET: WOMPI_TEST.integritySecret,
       WOMPI_EVENTS_SECRET: WOMPI_TEST.eventsSecret,
+      // Los correos de la app llegan al buzón de pruebas de Supabase (Mailpit).
+      MAILPIT_URL: process.env.MAILPIT_URL ?? "http://127.0.0.1:54324",
+      CRON_SECRET: CRON_SECRET_TEST,
     },
   },
 });

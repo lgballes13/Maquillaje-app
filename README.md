@@ -173,6 +173,30 @@ pago y correr las pruebas; el pago real no funciona con ellas. Para probar contr
    resultado directamente en Wompi).
 4. Las tarjetas y datos de prueba están en la documentación de Wompi: <https://docs.wompi.co>.
 
+## Correos y recordatorios
+
+La app envía dos correos de citas: la **confirmación** (cuando se paga el anticipo o el saldo a
+favor lo cubre) y el **recordatorio** (el día anterior a las 9 a. m., hora de Colombia).
+
+- **En local** los correos llegan al buzón de pruebas de Supabase (Mailpit):
+  <http://127.0.0.1:54324>. Solo necesitas `MAILPIT_URL=http://127.0.0.1:54324` en `.env.local`.
+- **En producción** se envían con [Resend](https://resend.com):
+  1. Crea la cuenta, agrega y verifica tu dominio (Resend te muestra los registros DNS).
+  2. Crea una API key y ponla en Vercel como `RESEND_API_KEY`.
+  3. Pon en `EMAIL_FROM` el remitente, por ejemplo `Estudio <citas@tudominio.com>`.
+
+Si no hay ningún proveedor configurado, la app sigue funcionando y solo deja un aviso en el
+registro del servidor.
+
+**Recordatorios (Vercel Cron):** `vercel.json` programa `/api/cron/recordatorios` todos los días
+a las 14:00 UTC (9 a. m. en Colombia). Para que funcione, agrega en Vercel la variable
+`CRON_SECRET` con un valor largo al azar (`openssl rand -hex 32`); Vercel lo envía solo y la ruta
+rechaza cualquier llamada sin él. Para probarla en local:
+
+```bash
+curl -H "Authorization: Bearer TU_CRON_SECRET" http://localhost:3000/api/cron/recordatorios
+```
+
 ## Despliegue en Vercel
 
 1. Entra a <https://vercel.com/new> e importa el repositorio `Maquillaje-app`.

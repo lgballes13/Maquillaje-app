@@ -176,6 +176,23 @@ export async function createBlockAction(_prev: FormState, formData: FormData): P
   return { status: "success", message: "Horario bloqueado." };
 }
 
+/** Marca si la clienta asistió (solo citas confirmadas que ya empezaron). */
+export async function markAttendanceAction(formData: FormData): Promise<void> {
+  await requireAdmin("/admin/citas");
+  const parsed = z
+    .object({ id: z.uuid(), attended: z.enum(["true", "false"]) })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("mark_attendance", {
+    p_appointment_id: parsed.data.id,
+    p_attended: parsed.data.attended === "true",
+  });
+  if (error) console.error("Error al marcar asistencia", error.code, error.message);
+  revalidatePath("/admin/citas");
+}
+
 export async function deleteBlockAction(formData: FormData): Promise<void> {
   await requireAdmin("/admin/citas");
   const id = z.uuid().safeParse(formData.get("id"));

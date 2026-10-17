@@ -7,8 +7,19 @@ import { formatFullDateTime } from "@/lib/format";
 import { toZonedDateString } from "@/lib/time";
 import { requireUser } from "@/modules/auth/session";
 import { BookingConfirmForm } from "@/modules/booking/components/booking-confirm-form";
-import { depositFor, formatCop, formatDuration, policyPoints } from "@/modules/booking/policy";
-import { getActiveService, getCurrentRules, getSlotsForDate } from "@/modules/booking/queries";
+import {
+  amountDueToday,
+  depositFor,
+  formatCop,
+  formatDuration,
+  policyPoints,
+} from "@/modules/booking/policy";
+import {
+  getActiveService,
+  getCurrentRules,
+  getMyCreditBalance,
+  getSlotsForDate,
+} from "@/modules/booking/queries";
 
 export const metadata: Metadata = { title: "Confirma tu cita", robots: { index: false } };
 
@@ -28,12 +39,14 @@ export default async function BookingConfirmPage({
 
   const service = await getActiveService(servicioId);
   if (!service) notFound();
-  const rules = await getCurrentRules();
+  const [rules, balance] = await Promise.all([getCurrentRules(), getMyCreditBalance()]);
 
   const startsAt = new Date(inicio.data);
   const slots = await getSlotsForDate(service, toZonedDateString(startsAt, siteConfig.timeZone));
   const stillFree = slots.some((slot) => slot.startsAt.getTime() === startsAt.getTime());
   const deposit = depositFor(service.price_cop, rules.deposit_percent);
+  // Informativo: la base de datos aplica el saldo a favor al reservar.
+  const { creditApplied, due } = amountDueToday(deposit, balance);
 
   return (
     <main id="contenido" className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
@@ -62,12 +75,33 @@ export default async function BookingConfirmPage({
             <dt className="text-muted-foreground">Valor del servicio</dt>
             <dd className="font-medium">{formatCop(service.price_cop)}</dd>
           </div>
-          <div>
-            <dt className="text-muted-foreground">Anticipo a pagar hoy</dt>
-            <dd className="text-lg font-semibold" data-testid="deposit">
-              {formatCop(deposit)}
-            </dd>
-          </div>
+          {creditApplied > 0 ? (
+            <>
+              <div>
+                <dt className="text-muted-foreground">Anticipo</dt>
+                <dd className="font-medium">{formatCop(deposit)}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Saldo a favor que se aplica</dt>
+                <dd className="font-medium" data-testid="credit-applied">
+                  {formatCop(creditApplied)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">A pagar hoy</dt>
+                <dd className="text-lg font-semibold" data-testid="deposit">
+                  {formatCop(due)}
+                </dd>
+              </div>
+            </>
+          ) : (
+            <div>
+              <dt className="text-muted-foreground">Anticipo a pagar hoy</dt>
+              <dd className="text-lg font-semibold" data-testid="deposit">
+                {formatCop(deposit)}
+              </dd>
+            </div>
+          )}
         </dl>
       </section>
 
@@ -95,7 +129,7 @@ export default async function BookingConfirmPage({
               serviceId={service.id}
               startsAt={startsAt.toISOString()}
               rulesVersion={rules.version}
-              requiresPayment={deposit > 0}
+              requiresPayment={due > 0}
             />
           </section>
         </>

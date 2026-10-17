@@ -4,7 +4,7 @@
 > una conversación nueva: léelo primero.
 
 **Última actualización:** 2026-10-17
-**Fase actual:** 2 · Citas y pagos (terminada, pendiente de tu revisión y merge del PR)
+**Fase actual:** 3 · Ciclo de la cita (terminada, pendiente de tu revisión y merge del PR)
 
 ## Plan de fases
 
@@ -13,7 +13,7 @@
 | 0    | Base: Next.js, TypeScript, Tailwind/shadcn, lint, pruebas, CI, seguridad, Sentry, PWA                    | ✅ Terminada |
 | 1    | Datos y acceso: migraciones Supabase, RLS, login, admin con 2FA, reglas configurables, auditoría, seed   | ✅ Terminada |
 | 2    | Citas y pagos: servicios, disponibilidad, hold de 10 min, anti-solapamiento, política, anticipo, webhook | ✅ Terminada |
-| 3    | Ciclo de la cita: asistió/no asistió, reprogramar, cancelar, penalidades, recordatorios                  | ⏳ Pendiente |
+| 3    | Ciclo de la cita: asistió/no asistió, reprogramar, cancelar, penalidades, recordatorios                  | ✅ Terminada |
 | 4    | Tienda: catálogo, búsqueda, carrito, checkout, stock atómico, pedidos                                    | ⏳ Pendiente |
 | 5    | Preventa y lista de espera                                                                               | ⏳ Pendiente |
 | 6    | Portafolio con autorización de fotos                                                                     | ⏳ Pendiente |
@@ -70,6 +70,25 @@
 - Servicios de ejemplo provisionales: social ($180.000, 90 min), novia ($450.000, 150 min),
   asesoría ($220.000, 120 min). Se editan desde el panel.
 
+La Fase 2 se fusionó a `main` el 2026-10-17 (PR #9).
+
+## Hecho en la Fase 3
+
+- Migraciones: estados nuevos de la cita (asistió, no asistió, reprogramada), saldo a favor como
+  libro de movimientos (`credit_movements`, DT-023) y funciones `cancel_appointment`,
+  `reschedule_appointment`, `mark_attendance` y `my_credit_balance` (DT-024).
+- El saldo a favor se aplica solo al anticipo de la siguiente reserva; si lo cubre, la cita se
+  confirma sin pagar.
+- Páginas: en «Tu cita» los botones Cambiar horario, Cancelar y Reprogramar (según el caso),
+  `/citas/[id]/cancelar` (dice cuánto queda a favor antes de confirmar),
+  `/citas/[id]/reprogramar` y su confirmación. «Mi cuenta» muestra el saldo a favor.
+- Panel `/admin/citas`: sección «Por marcar asistencia» con Asistió / No asistió.
+- Correos (DT-025): confirmación al quedar confirmada la cita y recordatorio el día anterior a
+  las 9 a. m. (Vercel Cron, `/api/cron/recordatorios`). Resend en producción, Mailpit en local.
+- Corregido: los días se veían como «16 De Oct»; ahora «16 de oct».
+- Pruebas: 138 unitarias, 110 de base de datos (pgTAP) y 38 E2E por navegador (5 nuevas del
+  ciclo de la cita).
+
 ## Para activar pagos reales (cuando quieras)
 
 1. Crea tu cuenta en <https://comercios.wompi.co> y entra en modo **Pruebas**.
@@ -81,8 +100,8 @@
 
 ## Preguntas abiertas
 
-- **Plazo para reprogramar:** lo interpreté como «horas que tiene la clienta, después de no
-  asistir, para reprogramar y conservar parte del anticipo». Confirmar antes de la Fase 3.
+- **Plazo para reprogramar:** confirmado: horas que tiene la clienta, después de no asistir,
+  para reprogramar con el descuento del porcentaje.
 - **Lista de clientes en el panel:** queda para la Fase 7.
 
 ## Datos del negocio pendientes
@@ -90,7 +109,7 @@
 - [ ] Nombre del negocio, ciudad y país (¿Colombia, COP, America/Bogota?)
 - [x] Pasarela de pago: Wompi
 - [ ] Valores iniciales de la política de anticipo (%, horas para reprogramar, % de pérdida, horas para cancelar gratis)
-- [ ] Canales de notificación (propuesta: correo con Resend)
+- [x] Canales de notificación: correo con Resend (WhatsApp automático queda fuera por ahora)
 - [ ] Opciones de envío
 - [ ] Preventa: % de anticipo y días estimados de entrega
 - [ ] Número de WhatsApp
@@ -104,7 +123,7 @@
 - [ ] Vercel (cuando quieras ver la app publicada)
 - [ ] Sentry (opcional, cuando se publique)
 - [ ] Wompi en modo pruebas (pasos arriba; la app ya está lista)
-- [ ] Resend (Fase 3)
+- [ ] Resend (para enviar correos reales; pasos en el README)
 
 ## Riesgos y pendientes conocidos
 
@@ -122,5 +141,12 @@
   sandbox real de Wompi cuando tengas las llaves de pruebas.
 - Una cita marcada «por revisar» (pago tardío con el horario ocupado, monto que no coincide)
   se resuelve a mano por ahora; las devoluciones automáticas no están en el alcance.
+- El recordatorio sale el día anterior a las 9 a. m., no exactamente 24 horas antes (límite del
+  plan gratuito de Vercel, DT-025).
+- Si la admin no marca la asistencia, la cita queda «confirmada» y la clienta no ve la opción de
+  reprogramar; el plazo corre igual desde la hora de la cita.
+- Al reprogramar se usa el precio y el % de anticipo vigentes (DT-024): si cambiaron, la clienta
+  paga la diferencia o le sobra saldo.
+- El saldo a favor no vence ni se devuelve en dinero desde la app.
 - Las citas vencidas se marcan cuando alguien hace una reserva nueva; mientras tanto se ven como
   vencidas en pantalla. No hace falta un proceso programado.
