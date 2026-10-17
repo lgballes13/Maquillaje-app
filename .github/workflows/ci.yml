@@ -82,6 +82,16 @@ jobs:
         run: npx playwright install --with-deps chromium webkit
       - name: Ejecutar pruebas E2E
         run: npm run test:e2e
+      - name: Lighthouse en celular (rendimiento, accesibilidad, buenas prácticas y SEO ≥ 90)
+        run: npm run lighthouse
+      - name: Guardar los reportes de Lighthouse
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-lighthouse
+          path: .lighthouseci/
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Guardar reporte si algo falla
         if: failure()
         uses: actions/upload-artifact@v4

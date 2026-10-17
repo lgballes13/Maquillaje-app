@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { FillImage } from "@/components/fill-image";
 import Link from "next/link";
 import { useActionState, useEffect, useId, useState } from "react";
 import { CheckboxField } from "@/components/forms/checkbox-field";
@@ -153,10 +153,9 @@ function CartContents({
             <li key={line.productId} className="flex gap-3" data-testid="cart-line">
               <div className="relative size-20 shrink-0 overflow-hidden rounded-md bg-muted">
                 {line.image ? (
-                  <Image
+                  <FillImage
                     src={line.image.url}
                     alt={line.image.alt}
-                    fill
                     sizes="80px"
                     className="object-cover"
                     unoptimized={UNOPTIMIZED_IMAGES}

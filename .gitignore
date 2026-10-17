@@ -49,3 +49,6 @@ next-env.d.ts
 
 # Sentry
 .env.sentry-build-plugin
+
+# Reportes de Lighthouse
+.lighthouseci/

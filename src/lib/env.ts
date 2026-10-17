@@ -13,6 +13,13 @@ export const publicEnvSchema = z.object({
     .string()
     .regex(/^\d{8,15}$/, "NEXT_PUBLIC_WHATSAPP_NUMBER debe tener solo dígitos (8 a 15)")
     .optional(),
+  // Datos del responsable para los textos legales (Ley 1581 y 1480). Si faltan,
+  // las páginas legales muestran «[pendiente]» para que se note antes de publicar.
+  NEXT_PUBLIC_CONTACT_EMAIL: z
+    .email("NEXT_PUBLIC_CONTACT_EMAIL debe ser un correo válido")
+    .optional(),
+  NEXT_PUBLIC_BUSINESS_LEGAL_ID: z.string().trim().max(40).optional(),
+  NEXT_PUBLIC_BUSINESS_ADDRESS: z.string().trim().max(160).optional(),
   NEXT_PUBLIC_SUPABASE_URL: z.url().optional(),
   // La clave "anon" o "publishable" es pública por diseño: la protección real
   // son las reglas RLS de la base de datos.
@@ -55,6 +62,9 @@ export const publicEnv = parsePublicEnv({
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   NEXT_PUBLIC_BUSINESS_NAME: process.env.NEXT_PUBLIC_BUSINESS_NAME ?? "Estudio de Maquillaje",
   NEXT_PUBLIC_WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
+  NEXT_PUBLIC_CONTACT_EMAIL: process.env.NEXT_PUBLIC_CONTACT_EMAIL,
+  NEXT_PUBLIC_BUSINESS_LEGAL_ID: process.env.NEXT_PUBLIC_BUSINESS_LEGAL_ID,
+  NEXT_PUBLIC_BUSINESS_ADDRESS: process.env.NEXT_PUBLIC_BUSINESS_ADDRESS,
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,

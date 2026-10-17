@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
+import { CloseAccountForm } from "@/modules/account/components/close-account-form";
 import { signOutAction } from "@/modules/auth/actions";
 import { requireUser } from "@/modules/auth/session";
 import { formatCop } from "@/modules/booking/policy";
@@ -109,6 +110,48 @@ export default async function AccountPage({ searchParams }: PageProps<"/cuenta">
             Ir a la tienda
           </Link>
         </div>
+      </section>
+
+      <section
+        aria-labelledby="titulo-privacidad"
+        className="mt-6 rounded-xl border border-border bg-card p-5"
+      >
+        <h2 id="titulo-privacidad" className="text-lg font-semibold">
+          Tus datos personales
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Puedes descargar una copia de todo lo que guardamos sobre ti o eliminar tu cuenta. Más
+          detalles en la{" "}
+          <Link
+            href="/privacidad"
+            className="font-medium text-primary underline underline-offset-4"
+          >
+            política de tratamiento de datos
+          </Link>
+          .
+        </p>
+        <a
+          href="/cuenta/mis-datos"
+          download
+          className={`${buttonVariants({ variant: "outline" })} mt-3`}
+        >
+          Descargar mis datos
+        </a>
+        <details className="mt-4 rounded-md border border-destructive/40">
+          <summary className="flex min-h-11 cursor-pointer items-center px-4 py-2 font-medium text-destructive">
+            Eliminar mi cuenta
+          </summary>
+          <div className="grid gap-3 border-t border-destructive/40 p-4 text-sm">
+            <p>
+              Borramos tu nombre, celular y notas, sales de las listas de espera y ya no podrás
+              ingresar. Si tienes saldo a favor, lo pierdes. Las citas y compras que hiciste se
+              conservan sin tus datos de contacto, porque la ley nos pide guardar los registros
+              contables. Esto no se puede deshacer.
+            </p>
+            <p>Si tienes una cita pendiente o un pedido en camino, primero debe terminar.</p>
+            <CloseAccountForm />
+          </div>
+        </details>
       </section>
 
       <form action={signOutAction} className="mt-6">

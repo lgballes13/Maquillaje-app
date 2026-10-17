@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { FillImage } from "@/components/fill-image";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { formatCop } from "@/modules/booking/policy";
@@ -112,10 +112,9 @@ export default async function AdminProductsPage() {
                           {images.map((image) => (
                             <li key={image.id} className="grid gap-2">
                               <div className="relative aspect-square overflow-hidden rounded-md bg-muted">
-                                <Image
+                                <FillImage
                                   src={productImageUrl(image.storage_path)}
                                   alt={image.alt_text}
-                                  fill
                                   sizes="200px"
                                   className="object-cover"
                                   unoptimized={UNOPTIMIZED_IMAGES}

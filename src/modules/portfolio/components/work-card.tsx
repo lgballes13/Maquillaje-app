@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { FillImage } from "@/components/fill-image";
 import Link from "next/link";
 import { ImageOff } from "lucide-react";
 import { UNOPTIMIZED_IMAGES } from "@/modules/shop/images";
@@ -14,10 +14,9 @@ export function WorkCard({ work, priority }: { work: PortfolioCard; priority?: b
       >
         <div className="relative aspect-[4/5] bg-muted">
           {cover ? (
-            <Image
+            <FillImage
               src={cover.url}
               alt={cover.alt}
-              fill
               sizes="(min-width: 1024px) 300px, (min-width: 640px) 45vw, 90vw"
               className="object-cover"
               priority={priority}

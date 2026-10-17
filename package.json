@@ -20,7 +20,8 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
-    "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts && prettier --write src/lib/supabase/database.types.ts"
+    "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts && prettier --write src/lib/supabase/database.types.ts",
+    "lighthouse": "lhci autorun"
   },
   "dependencies": {
     "@sentry/nextjs": "^11.8.0",
@@ -39,6 +40,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
+    "@lhci/cli": "0.15.1",
     "@next/env": "^16.4.2",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/turbopack": "^4",

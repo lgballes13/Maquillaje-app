@@ -27,4 +27,16 @@ describe("parsePublicEnv", () => {
       parsePublicEnv({ ...valid, NEXT_PUBLIC_WHATSAPP_NUMBER: "+57 300 123 4567" }),
     ).toThrow(/solo dígitos/);
   });
+
+  it("acepta los datos del responsable y valida el correo de contacto", () => {
+    const env = parsePublicEnv({
+      ...valid,
+      NEXT_PUBLIC_CONTACT_EMAIL: "hola@estudio.co",
+      NEXT_PUBLIC_BUSINESS_LEGAL_ID: "NIT 900.123.456-7",
+    });
+    expect(env.NEXT_PUBLIC_CONTACT_EMAIL).toBe("hola@estudio.co");
+    expect(() => parsePublicEnv({ ...valid, NEXT_PUBLIC_CONTACT_EMAIL: "no-es-correo" })).toThrow(
+      /correo válido/,
+    );
+  });
 });
