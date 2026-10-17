@@ -4,7 +4,9 @@
 > una conversación nueva: léelo primero.
 
 **Última actualización:** 2026-10-17
-**Fase actual:** 8 · Legal, SEO, rendimiento, respaldos y publicación (terminada, pendiente de tu revisión y merge del PR). Es la última fase del plan.
+**Fase actual:** plan terminado (Fases 0 a 8 con merge en `main`; la última, PR #17).
+**Siguiente:** versión de pruebas en Vercel (`maquillaje-pruebas`) con el Supabase de producción en
+modo pruebas, siguiendo [publicacion.md](publicacion.md). Las migraciones ya se aplicaron.
 
 ## Plan de fases
 
@@ -219,8 +221,8 @@ La Fase 5 se fusionó a `main` el 2026-10-17 (PR #13).
 ## Cuentas que necesitarás
 
 - [x] GitHub (repositorio `lgballes13/Maquillaje-app`)
-- [x] Supabase (proyecto creado; falta aplicar migraciones con `npx supabase db push`)
-- [ ] Vercel (cuando quieras ver la app publicada; pasos en [publicacion.md](publicacion.md))
+- [x] Supabase (proyecto creado y migraciones aplicadas)
+- [x] Vercel (proyecto `maquillaje-pruebas` creado; pasos en [publicacion.md](publicacion.md))
 - [ ] Sentry (opcional, cuando se publique)
 - [ ] Wompi en modo pruebas (pasos arriba; la app ya está lista)
 - [ ] Resend (para enviar correos reales; pasos en el README)
