@@ -457,3 +457,54 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   reprogramadas. Las horas libres son los huecos de 30 minutos o más dentro del horario de
   atención.
 - `/admin/citas` sigue para el día a día: marcar asistencia, pagos por revisar y bloqueos.
+
+## DT-039 · Textos legales, descarga de datos y cierre de cuenta
+
+**Fecha:** 2026-10-17 · **Estado:** vigente (textos en borrador, pendientes de revisión legal)
+
+- `/privacidad` (Ley 1581 y Decreto 1377) y `/terminos` (Ley 1480) son páginas del sitio con
+  versión y fecha (`src/config/legal.ts`). Los plazos de citas, tienda y preventa salen de las
+  reglas vigentes del panel, para que el texto legal no contradiga lo que la app cobra.
+- Los datos del responsable (correo, NIT, dirección) son variables `NEXT_PUBLIC_*`, no código: si
+  faltan se ve «[pendiente]», que la lista de revisión exige quitar antes de lanzar.
+- **Descargar mis datos:** un JSON con perfil, citas, pagos, pedidos, saldo a favor y lista de
+  espera, leído con la sesión de la clienta (las reglas RLS limitan lo que ve). Límite de 10 por
+  hora.
+- **Eliminar la cuenta:** pide la contraseña y escribir ELIMINAR. `close_my_account()` borra lista
+  de espera y notas, quita los datos de contacto de pedidos, citas, perfil y de las copias en la
+  auditoría. Sin historial, la app borra el usuario; con historial lo anonimiza (correo
+  `eliminada-…@cuenta-eliminada.invalid`, contraseña al azar y acceso bloqueado), porque los
+  pagos se deben conservar para la contabilidad.
+- No se puede cerrar con citas o pedidos en curso, para no dejar dinero o entregas sin dueña.
+  Las cuentas del equipo tampoco (se quitan desde la base).
+
+## DT-040 · SEO y Lighthouse en la CI
+
+**Fecha:** 2026-10-17 · **Estado:** vigente
+
+- Archivos de metadatos de Next.js: `robots.ts` (bloquea panel, cuenta, carrito y rutas
+  privadas), `sitemap.ts` (páginas fijas más servicios, productos y trabajos publicados) y
+  `opengraph-image.tsx` (imagen de 1200×630 generada, sin archivo de diseño todavía).
+- Datos estructurados `BeautySalon` en la página de inicio, en un `<script>` con el nonce de la
+  CSP y con `<` escapado.
+- Zod v4 prueba `new Function("")` para compilar validaciones más rápido; la CSP lo bloquea y
+  Lighthouse lo cuenta como error de consola. `z.config({ jitless: true })` en
+  `instrumentation-client.ts` lo evita sin cambiar la CSP.
+- `next/image` con `fill` escribe un atributo `style` que la CSP bloquea (las fotos de la tienda
+  y del portafolio perdían su posición y la consola mostraba errores). `FillImage`
+  (`src/components/fill-image.tsx`) usa `getImageProps` y da la misma posición con clases.
+- `@lhci/cli` (versión fija) mide 5 páginas públicas en celular, 2 veces cada una, después de las
+  E2E en la CI. Falla si alguna categoría baja de 90. Los reportes quedan 7 días como artifact.
+
+## DT-041 · Respaldo diario cifrado en GitHub
+
+**Fecha:** 2026-10-17 · **Estado:** vigente (decisión de la dueña: opción gratis por ahora)
+
+- El plan gratis de Supabase no hace respaldos. Un flujo de GitHub Actions saca cada día roles,
+  estructura y datos con `supabase db dump`, los empaqueta y los cifra con `age` usando una clave
+  pública. La clave privada la guarda solo la dueña; GitHub nunca ve los datos sin cifrar.
+- Se guardan 30 días como artifact de la ejecución (el repositorio no crece).
+- Si falta el secreto `SUPABASE_DB_URL` o la variable `BACKUP_AGE_RECIPIENT`, el flujo termina en
+  verde sin hacer nada.
+- No cubre Storage. Si se pasa a Supabase Pro, sus respaldos diarios reemplazan o complementan
+  este flujo.

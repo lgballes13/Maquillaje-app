@@ -1,0 +1,73 @@
+# Respaldo diario de la base de datos de PRODUCCIÓN (DT-041).
+# - Copia los roles, la estructura y los datos con la CLI de Supabase.
+# - Los cifra con `age`: solo quien tenga la clave privada puede abrirlos.
+# - GitHub los guarda 30 días como «artifact» de esta ejecución.
+# Mientras no exista el secreto SUPABASE_DB_URL, el flujo no hace nada.
+# Cómo configurarlo y cómo restaurar: docs/respaldos.md
+name: Respaldo diario
+
+on:
+  schedule:
+    # 08:00 UTC = 3:00 a. m. en Bogotá, cuando casi nadie usa la app.
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: respaldo
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  respaldo:
+    name: Copia cifrada de la base de datos
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      BACKUP_AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
+    steps:
+      - name: Revisar la configuración
+        id: config
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ] || [ -z "$BACKUP_AGE_RECIPIENT" ]; then
+            echo "Falta SUPABASE_DB_URL (secreto) o BACKUP_AGE_RECIPIENT (variable): no hay respaldo todavía."
+            echo "listo=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "listo=si" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.config.outputs.listo == 'si'
+      - uses: actions/setup-node@v4
+        if: steps.config.outputs.listo == 'si'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Instalar dependencias y age
+        if: steps.config.outputs.listo == 'si'
+        run: |
+          npm ci
+          sudo apt-get update -q && sudo apt-get install -y -q age
+      - name: Copiar la base de datos
+        if: steps.config.outputs.listo == 'si'
+        run: |
+          mkdir -p respaldo
+          npx supabase db dump --db-url "$SUPABASE_DB_URL" -f respaldo/roles.sql --role-only
+          npx supabase db dump --db-url "$SUPABASE_DB_URL" -f respaldo/estructura.sql
+          npx supabase db dump --db-url "$SUPABASE_DB_URL" -f respaldo/datos.sql --use-copy --data-only
+      - name: Cifrar y borrar la copia sin cifrar
+        if: steps.config.outputs.listo == 'si'
+        run: |
+          name="respaldo-$(date -u +%Y-%m-%d)"
+          tar czf - respaldo | age -r "$BACKUP_AGE_RECIPIENT" -o "$name.tar.gz.age"
+          rm -rf respaldo
+          echo "ARCHIVO=$name" >> "$GITHUB_ENV"
+      - name: Guardar el respaldo cifrado (30 días)
+        if: steps.config.outputs.listo == 'si'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARCHIVO }}
+          path: ${{ env.ARCHIVO }}.tar.gz.age
+          retention-days: 30
+          if-no-files-found: error

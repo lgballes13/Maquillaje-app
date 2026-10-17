@@ -1165,6 +1165,7 @@ export type Database = {
       };
       cancel_appointment: { Args: { p_appointment_id: string }; Returns: number };
       cancel_my_order: { Args: { p_order_id: string }; Returns: undefined };
+      close_my_account: { Args: Record<PropertyKey, never>; Returns: string };
       consume_rate_limit: {
         Args: { p_key: string; p_limit: number; p_window_seconds: number };
         Returns: boolean;

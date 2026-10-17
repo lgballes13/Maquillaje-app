@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { FillImage } from "@/components/fill-image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
@@ -70,10 +70,9 @@ export default async function WorkPage({ params }: PageProps<"/portafolio/[traba
                 key={image.url}
                 className="relative aspect-[4/5] overflow-hidden rounded-md bg-muted"
               >
-                <Image
+                <FillImage
                   src={image.url}
                   alt={image.alt}
-                  fill
                   sizes="(min-width: 640px) 240px, 45vw"
                   className="object-cover"
                   unoptimized={UNOPTIMIZED_IMAGES}

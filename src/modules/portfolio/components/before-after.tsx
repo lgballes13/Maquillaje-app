@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { FillImage } from "@/components/fill-image";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { UNOPTIMIZED_IMAGES } from "@/modules/shop/images";
@@ -52,10 +52,9 @@ export function BeforeAfter({
             data-testid={`photo-${image.kind}`}
           >
             <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-muted">
-              <Image
+              <FillImage
                 src={image.url}
                 alt={image.alt}
-                fill
                 priority={i === images.length - 1}
                 sizes="(min-width: 640px) 480px, 90vw"
                 className="object-cover"

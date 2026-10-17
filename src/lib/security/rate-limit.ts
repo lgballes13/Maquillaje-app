@@ -23,6 +23,8 @@ export const RATE_LIMITS = {
   "order:user": { limit: 20, windowSeconds: 60 * 60 },
   // Lista de espera: inscribirse o salirse (cada aviso es un correo).
   "waitlist:user": { limit: 30, windowSeconds: 60 * 60 },
+  // Mi cuenta: descargar mis datos y eliminar la cuenta (pide la contraseña).
+  "account:user": { limit: 10, windowSeconds: 60 * 60 },
   // Panel: subir fotos de productos.
   "upload:user": { limit: 60, windowSeconds: 60 * 60 },
 } as const;

@@ -4,7 +4,7 @@
 > una conversación nueva: léelo primero.
 
 **Última actualización:** 2026-10-17
-**Fase actual:** 7 · Panel de administración completo (terminada, pendiente de tu revisión y merge del PR)
+**Fase actual:** 8 · Legal, SEO, rendimiento, respaldos y publicación (terminada, pendiente de tu revisión y merge del PR). Es la última fase del plan.
 
 ## Plan de fases
 
@@ -18,7 +18,7 @@
 | 5    | Preventa y lista de espera                                                                               | ✅ Terminada |
 | 6    | Portafolio con autorización de fotos                                                                     | ✅ Terminada |
 | 7    | Panel admin completo: agenda, gestión, reportes, CSV                                                     | ✅ Terminada |
-| 8    | Legal (Ley 1581 y 1480), SEO, Lighthouse ≥ 90, respaldos, despliegue                                     | ⏳ Pendiente |
+| 8    | Legal (Ley 1581 y 1480), SEO, Lighthouse ≥ 90, respaldos, despliegue                                     | ✅ Terminada |
 
 ## Hecho en la Fase 0
 
@@ -163,6 +163,30 @@ La Fase 5 se fusionó a `main` el 2026-10-17 (PR #13).
   correo y teléfono (decisión de la dueña). Cada descarga queda en la auditoría.
 - Pruebas: 223 unitarias, 284 de base de datos (pgTAP) y 52 E2E por navegador (2 nuevas).
 
+## Hecho en la Fase 8
+
+- Decisiones: textos legales, descarga de datos y cierre de cuenta (DT-039), SEO y Lighthouse en
+  la CI (DT-040) y respaldo diario cifrado en GitHub (DT-041).
+- Páginas `/privacidad` (Ley 1581) y `/terminos` (Ley 1480: retracto, garantía, reversión del
+  pago y quejas), enlazadas en el pie de página. Son **borradores** para revisión de un abogado.
+  Usan las variables nuevas `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_BUSINESS_LEGAL_ID` y
+  `NEXT_PUBLIC_BUSINESS_ADDRESS`; si faltan, muestran «[pendiente]».
+- En «Mi cuenta»: **Descargar mis datos** (archivo JSON) y **Eliminar mi cuenta** (pide la
+  contraseña y escribir ELIMINAR). Migración `20261017001300_cerrar_cuenta.sql`: sin historial se
+  borra todo; con citas o pedidos se quitan los datos de contacto y se bloquea el acceso. No deja
+  cerrar la cuenta con citas o pedidos en curso.
+- SEO: título y descripción por página, `robots.txt`, `sitemap.xml` (con servicios, productos y
+  trabajos), imagen para compartir en redes y datos del negocio para Google (`BeautySalon`).
+- Lighthouse en celular: 97 a 100 en las cuatro categorías; la CI falla si alguna baja de 90.
+- Respaldo diario cifrado de la base de producción (`.github/workflows/respaldo.yml`, 30 días) y
+  guía para restaurar: [respaldos.md](respaldos.md).
+- Guía de publicación paso a paso y lista de revisión antes de lanzar:
+  [publicacion.md](publicacion.md).
+- La tienda y el portafolio ya aparecen enlazados en la página de inicio.
+- Corregido: las fotos de la tienda y del portafolio usaban un estilo en línea que la CSP bloqueaba
+  (`FillImage`, DT-040).
+- Pruebas: 226 unitarias, 298 de base de datos (pgTAP) y 57 E2E por navegador (5 nuevas).
+
 ## Para activar pagos reales (cuando quieras)
 
 1. Crea tu cuenta en <https://comercios.wompi.co> y entra en modo **Pruebas**.
@@ -196,7 +220,7 @@ La Fase 5 se fusionó a `main` el 2026-10-17 (PR #13).
 
 - [x] GitHub (repositorio `lgballes13/Maquillaje-app`)
 - [x] Supabase (proyecto creado; falta aplicar migraciones con `npx supabase db push`)
-- [ ] Vercel (cuando quieras ver la app publicada)
+- [ ] Vercel (cuando quieras ver la app publicada; pasos en [publicacion.md](publicacion.md))
 - [ ] Sentry (opcional, cuando se publique)
 - [ ] Wompi en modo pruebas (pasos arriba; la app ya está lista)
 - [ ] Resend (para enviar correos reales; pasos en el README)
@@ -211,8 +235,8 @@ La Fase 5 se fusionó a `main` el 2026-10-17 (PR #13).
 - La revisión de contraseñas filtradas (HaveIBeenPwned) es paga en Supabase; pendiente.
 - Producción: hay que configurar a mano en el panel de Supabase la Site URL, redirect URLs,
   largo mínimo de contraseña y crear la primera admin (pasos en el README).
-- Lighthouse aún no se ha medido; se mide y ajusta en la Fase 8.
-- La CSP con nonce obliga a renderizar todo por petición (ver DT-004); revisar rendimiento en la Fase 8.
+- La CSP con nonce obliga a renderizar todo por petición (ver DT-004). Aun así Lighthouse da 97 a
+  100 en local; en producción depende de la región de Vercel y de Supabase.
 - Pagos: el flujo con Wompi se probó con avisos simulados y firmados; falta probarlo contra el
   sandbox real de Wompi cuando tengas las llaves de pruebas.
 - Una cita marcada «por revisar» (pago tardío con el horario ocupado, monto que no coincide)
@@ -246,3 +270,15 @@ La Fase 5 se fusionó a `main` el 2026-10-17 (PR #13).
 - Los CSV tienen datos personales (Ley 1581): quien los descargue debe guardarlos con cuidado y
   borrarlos cuando ya no los necesite. La app registra quién descargó qué, pero no controla el
   archivo después.
+- Legal: la política de datos y los términos son borradores; deben revisarlos un abogado antes de
+  publicar, junto con los textos de la tienda, la preventa y el formato del portafolio.
+- Legal: el registro no pide confirmar la mayoría de edad; la política dice que el sitio es para
+  mayores de 18. Si el abogado lo pide, se agrega una casilla.
+- Descargar mis datos no incluye la nota interna de la admin sobre la clienta. Confirmar con el
+  abogado si debe entregarse cuando la clienta la pida.
+- Al eliminar la cuenta, las citas, pedidos y pagos se conservan sin datos de contacto (por
+  obligaciones contables). El plazo de conservación lo debe confirmar el abogado o el contador.
+- Respaldos: no incluyen los archivos de Storage (fotos y formatos firmados); guarda los
+  originales aparte. La restauración completa aún no se ha probado contra un proyecto real.
+- Si el plan gratis de Supabase pausa el proyecto por falta de uso, el sitio deja de funcionar
+  hasta reactivarlo en el panel.

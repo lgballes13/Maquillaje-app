@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { FillImage } from "@/components/fill-image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ImageOff } from "lucide-react";
@@ -47,10 +47,9 @@ export default async function ProductPage({ params }: PageProps<"/tienda/[produc
         <div className="grid gap-3">
           <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
             {main ? (
-              <Image
+              <FillImage
                 src={main.url}
                 alt={main.alt}
-                fill
                 priority
                 sizes="(min-width: 768px) 480px, 90vw"
                 className="object-cover"
@@ -70,10 +69,9 @@ export default async function ProductPage({ params }: PageProps<"/tienda/[produc
                   key={image.url}
                   className="relative aspect-square overflow-hidden rounded-md bg-muted"
                 >
-                  <Image
+                  <FillImage
                     src={image.url}
                     alt={image.alt}
-                    fill
                     sizes="120px"
                     className="object-cover"
                     unoptimized={UNOPTIMIZED_IMAGES}

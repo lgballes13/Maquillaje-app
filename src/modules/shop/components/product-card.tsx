@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { FillImage } from "@/components/fill-image";
 import Link from "next/link";
 import { ImageOff } from "lucide-react";
 import { formatCop } from "@/modules/booking/policy";
@@ -20,10 +20,9 @@ export function ProductCard({
       >
         <div className="relative aspect-square bg-muted">
           {product.image ? (
-            <Image
+            <FillImage
               src={product.image.url}
               alt={product.image.alt}
-              fill
               sizes="(min-width: 1024px) 300px, (min-width: 640px) 45vw, 90vw"
               className="object-cover"
               priority={priority}

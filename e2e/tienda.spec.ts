@@ -288,7 +288,16 @@ test.describe("Panel de la tienda", () => {
     await shop.goto(`/tienda?q=${encodeURIComponent(name)}`);
     const card = shop.getByRole("link", { name: new RegExp(name) });
     await expect(card).toBeVisible();
-    await expect(card.getByRole("img", { name: "Rubor rosado abierto" })).toBeVisible();
+    const photo = card.getByRole("img", { name: "Rubor rosado abierto" });
+    await expect(photo).toBeVisible();
+    // Sin estilos en línea (la CSP los bloquea) y la foto llena su recuadro.
+    await expect(photo).not.toHaveAttribute("style");
+    const [photoBox, frameBox] = await Promise.all([
+      photo.boundingBox(),
+      photo.locator("..").boundingBox(),
+    ]);
+    expect(photoBox?.width).toBeCloseTo(frameBox!.width, 0);
+    expect(photoBox?.height).toBeCloseTo(frameBox!.height, 0);
     await shop.close();
 
     // Pedidos: pagado → listo para recoger → entregado.

@@ -272,3 +272,23 @@ export async function exportAuditRows(actorId: string) {
   if (error) throw error;
   return data as { record_id: string; new_data: Record<string, unknown> }[];
 }
+
+// ---------------------------------------------------------------------------
+// Cuenta
+// ---------------------------------------------------------------------------
+
+/** Estado del usuario en Auth y de su perfil (para comprobar el cierre de cuenta). */
+export async function accountState(userId: string) {
+  const supabase = adminClient();
+  const [{ data: auth }, { data: profile, error }] = await Promise.all([
+    supabase.auth.admin.getUserById(userId),
+    supabase.from("profiles").select("full_name, phone").eq("id", userId).maybeSingle(),
+  ]);
+  if (error) throw error;
+  return {
+    exists: Boolean(auth?.user),
+    email: auth?.user?.email ?? null,
+    bannedUntil: (auth?.user as { banned_until?: string } | undefined)?.banned_until ?? null,
+    profile,
+  };
+}

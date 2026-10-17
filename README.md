@@ -128,6 +128,12 @@ Cada push a GitHub ejecuta `.github/workflows/ci.yml`:
 1. Lint, tipos, formato, pruebas unitarias y auditoría de dependencias.
 2. Supabase local en Docker, pruebas de seguridad de la base de datos, compilación y
    pruebas E2E en Chromium (escritorio y móvil 360 px) y WebKit (iPhone).
+3. Lighthouse en celular sobre 5 páginas públicas: falla si rendimiento, accesibilidad, buenas
+   prácticas o SEO bajan de 90. El reporte queda en el artifact `reporte-lighthouse`. En local:
+   `npm run build && npm run lighthouse` (necesita Supabase local encendido).
+
+Además, `.github/workflows/respaldo.yml` saca cada día una copia cifrada de la base de datos de
+producción. Cómo configurarlo y restaurar: [docs/respaldos.md](docs/respaldos.md).
 
 ## Supabase en producción
 
@@ -213,12 +219,15 @@ rechaza cualquier llamada sin él. Para probarla en local:
 curl -H "Authorization: Bearer TU_CRON_SECRET" http://localhost:3000/api/cron/recordatorios
 ```
 
-## Despliegue en Vercel
+## Despliegue
+
+La guía completa para publicar (Supabase de producción, Resend, Vercel, dominio, Wompi real,
+Sentry y respaldos) y la lista de revisión antes de lanzar están en
+[docs/publicacion.md](docs/publicacion.md).
+
+Resumen:
 
 1. Entra a <https://vercel.com/new> e importa el repositorio `Maquillaje-app`.
-2. Vercel detecta Next.js solo; no cambies los comandos.
-3. En **Environment Variables** agrega las variables de `.env.example`
+2. En **Environment Variables** agrega las variables de `.env.example`
    (con `NEXT_PUBLIC_SITE_URL` igual a tu dominio real y las claves del Supabase de producción).
-4. Pulsa **Deploy**. Cada push a `main` desplegará automáticamente.
-
-El paso a paso detallado (dominio y Sentry) se completa en la Fase 8.
+3. Pulsa **Deploy**. Cada push a `main` desplegará automáticamente.

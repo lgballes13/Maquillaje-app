@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { FillImage } from "@/components/fill-image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { formatDateTime, formatLongDate } from "@/lib/format";
@@ -192,10 +192,9 @@ export default async function AdminPortfolioPage() {
                             {images.map((image) => (
                               <li key={image.id} className="grid gap-2">
                                 <div className="relative aspect-[4/5] overflow-hidden rounded-md bg-muted">
-                                  <Image
+                                  <FillImage
                                     src={portfolioImageUrl(image.storage_path)}
                                     alt={image.alt_text}
-                                    fill
                                     sizes="200px"
                                     className="object-cover"
                                     unoptimized={UNOPTIMIZED_IMAGES}
