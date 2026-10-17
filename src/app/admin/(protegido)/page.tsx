@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, Package, Scissors, Settings2, ShoppingBag } from "lucide-react";
+import { CalendarDays, Images, Package, Scissors, Settings2, ShoppingBag } from "lucide-react";
 
 const LINKS = [
   {
@@ -27,6 +27,12 @@ const LINKS = [
     icon: Package,
   },
   {
+    href: "/admin/portafolio",
+    title: "Portafolio",
+    description: "Trabajos con fotos de antes y después y las autorizaciones firmadas.",
+    icon: Images,
+  },
+  {
     href: "/admin/reglas",
     title: "Reglas del negocio",
     description: "Anticipos, plazos, penalidades, tarifa de envío y horario de atención.",
@@ -39,7 +45,7 @@ export default function AdminHomePage() {
     <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
       <h1 className="text-2xl font-bold tracking-tight">Panel de administración</h1>
       <p className="mt-2 text-muted-foreground">
-        Las preventas, el portafolio y los reportes llegan en las próximas fases.
+        La agenda completa, los clientes y los reportes llegan en la próxima fase.
       </p>
       <ul className="mt-6 grid gap-4 sm:grid-cols-2">
         {LINKS.map(({ href, title, description, icon: Icon }) => (

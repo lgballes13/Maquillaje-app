@@ -4,7 +4,7 @@
 > una conversación nueva: léelo primero.
 
 **Última actualización:** 2026-10-17
-**Fase actual:** 5 · Preventa y lista de espera (terminada, pendiente de tu revisión y merge del PR)
+**Fase actual:** 6 · Portafolio (terminada, pendiente de tu revisión y merge del PR)
 
 ## Plan de fases
 
@@ -16,7 +16,7 @@
 | 3    | Ciclo de la cita: asistió/no asistió, reprogramar, cancelar, penalidades, recordatorios                  | ✅ Terminada |
 | 4    | Tienda: catálogo, búsqueda, carrito, checkout, stock atómico, pedidos                                    | ✅ Terminada |
 | 5    | Preventa y lista de espera                                                                               | ✅ Terminada |
-| 6    | Portafolio con autorización de fotos                                                                     | ⏳ Pendiente |
+| 6    | Portafolio con autorización de fotos                                                                     | ✅ Terminada |
 | 7    | Panel admin completo: agenda, gestión, reportes, CSV                                                     | ⏳ Pendiente |
 | 8    | Legal (Ley 1581 y 1480), SEO, Lighthouse ≥ 90, respaldos, despliegue                                     | ⏳ Pendiente |
 
@@ -132,6 +132,23 @@ La Fase 4 se fusionó a `main` el 2026-10-17 (PR #12).
 - Correos: «Reservaste…», «Llegó tu…: paga el saldo» y «Volvió…» (lista de espera).
 - Pruebas: 190 unitarias, 226 de base de datos (pgTAP) y 48 E2E por navegador (5 nuevas).
 
+La Fase 5 se fusionó a `main` el 2026-10-17 (PR #13).
+
+## Hecho en la Fase 6
+
+- Decisiones: portafolio solo con autorización firmada (DT-034) y fotos con comparación
+  antes / después (DT-035).
+- Migración `20261017001100_portafolio.sql`: categorías, autorizaciones (`portfolio_consents`),
+  trabajos y fotos, con reglas en la base (publicar solo con autorización vigente y foto de
+  «después»; al retirar la autorización se ocultan). Buckets `portafolio` (público) y
+  `autorizaciones` (privado). Categorías de ejemplo en el seed: Novia, Social y Editorial.
+- Páginas: `/portafolio` (filtro por categoría) y `/portafolio/[trabajo]` (antes / después,
+  más fotos y «Agendar este estilo»). «Portafolio» en el menú principal.
+- Panel `/admin/portafolio`: registrar la autorización con el formato firmado, verlo con enlace
+  temporal, retirarla (oculta los trabajos y borra sus fotos), crear y editar trabajos, subir
+  fotos de antes y después, publicar u ocultar, y categorías.
+- Pruebas: 202 unitarias, 256 de base de datos (pgTAP) y 50 E2E por navegador (2 nuevas).
+
 ## Para activar pagos reales (cuando quieras)
 
 1. Crea tu cuenta en <https://comercios.wompi.co> y entra en modo **Pruebas**.
@@ -198,6 +215,10 @@ La Fase 4 se fusionó a `main` el 2026-10-17 (PR #12).
 - Tienda: las devoluciones de dinero (pedido pagado y cancelado, pago tardío sin stock) se hacen
   a mano en Wompi; el pedido queda «por revisar» en el panel.
 - Tienda: no hay correo cuando el pedido está listo o enviado; la clienta lo ve en «Mis pedidos».
+- Portafolio: falta el texto del formato de autorización que firmará la clienta (revisión legal,
+  Ley 1581). La app guarda el formato firmado, pero no genera el documento.
+- Portafolio: las fotos se suben tal cual; si la clienta no quiere salir reconocible, hay que
+  editar la foto antes de subirla.
 - Preventa: el texto de condiciones de la preventa es un borrador (revisión legal junto con el de
   la tienda). La clienta no puede cancelar sola una reserva ya pagada: escribe y la admin la
   cancela; el anticipo se devuelve a mano en Wompi.

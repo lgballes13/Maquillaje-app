@@ -396,3 +396,29 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
 - Cuando la admin guarda un producto con unidades disponibles, la app avisa por correo a cada
   inscrita una sola vez (`notified_at`). Para un nuevo aviso, la clienta se vuelve a inscribir.
 - El panel de productos muestra cuántas preventas y personas en lista de espera tiene cada uno.
+
+## DT-034 · Portafolio solo con autorización firmada
+
+**Fecha:** 2026-10-17 · **Estado:** vigente (decisión de la dueña: «Formato firmado»)
+
+- Cada trabajo del portafolio está ligado a una autorización (`portfolio_consents`): nombre de la
+  clienta, fecha en que firmó y el formato firmado (foto o PDF) en el bucket **privado**
+  `autorizaciones`. Solo la admin con 2FA lo ve, con un enlace temporal de 60 segundos.
+- La base de datos hace cumplir las reglas aunque la app falle: un trabajo solo se publica con
+  autorización vigente y al menos una foto de «después»; si se retira la autorización, sus
+  trabajos se ocultan solos; una autorización no se borra ni se reactiva (queda el historial).
+- Al retirar la autorización, la app también borra las fotos del bucket público (Ley 1581: dejar
+  de usar los datos). El trabajo y la autorización quedan como registro, sin fotos.
+
+## DT-035 · Fotos del portafolio y comparación antes / después
+
+**Fecha:** 2026-10-17 · **Estado:** vigente
+
+- Bucket público `portafolio`, igual que la tienda (DT-030): 5 MB, JPG, PNG o WebP, tipo real
+  revisado por los primeros bytes y nombre puesto por el servidor; máximo 8 fotos por trabajo.
+  `next/image` las entrega en WebP/AVIF con tamaños según la pantalla y carga diferida.
+- Las fotos de un trabajo oculto tienen una ruta al azar imposible de adivinar, pero son públicas
+  si alguien ya tiene el enlace; por eso al retirar la autorización se borran.
+- La comparación no usa un deslizador (la CSP con nonce no permite estilos en línea, DT-004): en
+  celular se cambia entre «Antes» y «Después» con dos botones accesibles; en pantallas anchas se
+  ven lado a lado.

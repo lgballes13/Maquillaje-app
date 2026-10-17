@@ -31,6 +31,11 @@ export async function SiteHeader() {
                 Tienda
               </Link>
             </li>
+            <li>
+              <Link href="/portafolio" className={linkClass}>
+                Portafolio
+              </Link>
+            </li>
             {isAdmin ? (
               <li>
                 <Link href="/admin" className={linkClass}>

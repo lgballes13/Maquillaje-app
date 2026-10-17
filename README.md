@@ -97,7 +97,8 @@ src/
   config/         Configuración general del sitio y versión de la política de datos
   lib/            Lógica reutilizable (entorno, seguridad, Supabase, formularios)
   modules/        Lógica por dominio: auth/ (cuentas y 2FA), admin/ (reglas del negocio),
-                  booking/ (citas), payments/ (Wompi), notifications/ (correos), shop/ (tienda)
+                  booking/ (citas), payments/ (Wompi), notifications/ (correos), shop/ (tienda),
+                  portfolio/ (portafolio y autorizaciones)
   proxy.ts        Se ejecuta antes de cada página (CSP con nonce + renovar la sesión)
 supabase/
   migrations/     Cambios de la base de datos, en orden (nunca edites uno ya aplicado)
@@ -108,8 +109,7 @@ docs/             Estado del proyecto y decisiones técnicas
 .github/          Integración continua (GitHub Actions) y Dependabot
 ```
 
-Las preventas y la lista de espera viven en `shop/` (son pedidos de la tienda). En las próximas
-fases se agregan más módulos en `src/modules/` (portafolio).
+Las preventas y la lista de espera viven en `shop/` (son pedidos de la tienda).
 
 ## Variables de entorno
 

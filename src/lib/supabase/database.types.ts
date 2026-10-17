@@ -654,6 +654,184 @@ export type Database = {
           },
         ];
       };
+      portfolio_categories: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          sort_order: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          sort_order?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          sort_order?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
+      portfolio_consents: {
+        Row: {
+          client_name: string;
+          created_at: string;
+          created_by: string | null;
+          document_path: string;
+          id: string;
+          notes: string | null;
+          revoked_at: string | null;
+          revoked_reason: string | null;
+          signed_on: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          client_name: string;
+          created_at?: string;
+          created_by?: string | null;
+          document_path: string;
+          id?: string;
+          notes?: string | null;
+          revoked_at?: string | null;
+          revoked_reason?: string | null;
+          signed_on: string;
+        };
+        Update: {
+          client_name?: string;
+          created_at?: string;
+          created_by?: string | null;
+          document_path?: string;
+          id?: string;
+          notes?: string | null;
+          revoked_at?: string | null;
+          revoked_reason?: string | null;
+          signed_on?: string;
+        };
+        Relationships: [];
+      };
+      portfolio_images: {
+        Row: {
+          alt_text: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          kind: Database["public"]["Enums"]["portfolio_image_kind"];
+          sort_order: number;
+          storage_path: string;
+          work_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          alt_text: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          kind: Database["public"]["Enums"]["portfolio_image_kind"];
+          sort_order?: number;
+          storage_path: string;
+          work_id: string;
+        };
+        Update: {
+          alt_text?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          kind?: Database["public"]["Enums"]["portfolio_image_kind"];
+          sort_order?: number;
+          storage_path?: string;
+          work_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_images_work_id_fkey";
+            columns: ["work_id"];
+            isOneToOne: false;
+            referencedRelation: "portfolio_works";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      portfolio_works: {
+        Row: {
+          category_id: string | null;
+          consent_id: string;
+          created_at: string;
+          description: string | null;
+          id: string;
+          is_published: boolean;
+          published_at: string | null;
+          service_id: string | null;
+          sort_order: number;
+          title: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          category_id?: string | null;
+          consent_id: string;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_published?: boolean;
+          published_at?: string | null;
+          service_id?: string | null;
+          sort_order?: number;
+          title: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          category_id?: string | null;
+          consent_id?: string;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_published?: boolean;
+          published_at?: string | null;
+          service_id?: string | null;
+          sort_order?: number;
+          title?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_works_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "portfolio_categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "portfolio_works_consent_id_fkey";
+            columns: ["consent_id"];
+            isOneToOne: false;
+            referencedRelation: "portfolio_consents";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "portfolio_works_service_id_fkey";
+            columns: ["service_id"];
+            isOneToOne: false;
+            referencedRelation: "services";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       product_categories: {
         Row: {
           created_at: string;
@@ -1074,6 +1252,7 @@ export type Database = {
         | "expired";
       payment_stage: "full" | "deposit" | "balance";
       payment_status: "pending" | "approved" | "declined" | "voided" | "error";
+      portfolio_image_kind: "before" | "after";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -1224,6 +1403,7 @@ export const Constants = {
       ],
       payment_stage: ["full", "deposit", "balance"],
       payment_status: ["pending", "approved", "declined", "voided", "error"],
+      portfolio_image_kind: ["before", "after"],
     },
   },
 } as const;
