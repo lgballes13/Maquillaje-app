@@ -15,6 +15,8 @@ export const RATE_LIMITS = {
   "reset:ip": { limit: 10, windowSeconds: 60 * 60 },
   "reset:email": { limit: 3, windowSeconds: 60 * 60 },
   "mfa:user": { limit: 5, windowSeconds: 5 * 60 },
+  // Reservas: evita que alguien aparte horarios en masa para bloquear la agenda.
+  "booking:user": { limit: 10, windowSeconds: 60 * 60 },
 } as const;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

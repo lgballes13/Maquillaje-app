@@ -85,3 +85,49 @@ export function parseBusinessHoursForm(formData: FormData) {
   });
   return z.array(businessHourSchema).length(7).safeParse(days);
 }
+
+// ---------------------------------------------------------------------------
+// Servicios
+// ---------------------------------------------------------------------------
+export const serviceSchema = z.object({
+  id: z
+    .uuid()
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  name: z.string().trim().min(3, "Mínimo 3 caracteres").max(80, "Máximo 80 caracteres"),
+  description: z
+    .string()
+    .trim()
+    .max(500, "Máximo 500 caracteres")
+    .optional()
+    .transform((value) => value || null),
+  duration_minutes: integer("Duración", 15, 600),
+  price_cop: integer("Precio", 1000, 50_000_000),
+  sort_order: integer("Orden", 0, 1000),
+  is_active: z
+    .literal("on")
+    .optional()
+    .transform((value) => value === "on"),
+});
+
+export type ServiceInput = z.infer<typeof serviceSchema>;
+
+// ---------------------------------------------------------------------------
+// Bloqueos de agenda (las fechas y horas se escriben en la hora del negocio)
+// ---------------------------------------------------------------------------
+const dateField = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida");
+
+export const blockSchema = z.object({
+  startDate: dateField,
+  startTime: time,
+  endDate: dateField,
+  endTime: time,
+  reason: z
+    .string()
+    .trim()
+    .max(200, "Máximo 200 caracteres")
+    .optional()
+    .transform((value) => value || null),
+});
+
+export type BlockInput = z.infer<typeof blockSchema>;

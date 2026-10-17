@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { businessRulesSchema, parseBusinessHoursForm, rulesChanged } from "./schemas";
+import {
+  blockSchema,
+  businessRulesSchema,
+  parseBusinessHoursForm,
+  rulesChanged,
+  serviceSchema,
+} from "./schemas";
 
 const rulesForm = {
   deposit_percent: "50",
@@ -95,5 +101,67 @@ describe("parseBusinessHoursForm", () => {
 
   it("rechaza un día abierto sin horas", () => {
     expect(parseBusinessHoursForm(form({ "open-3": "on" })).success).toBe(false);
+  });
+});
+
+describe("serviceSchema", () => {
+  const form = {
+    id: "",
+    name: "Peinado",
+    description: "",
+    duration_minutes: "60",
+    price_cop: "90000",
+    sort_order: "0",
+    is_active: "on",
+  };
+
+  it("convierte el formulario (servicio nuevo, visible)", () => {
+    expect(serviceSchema.parse(form)).toEqual({
+      id: undefined,
+      name: "Peinado",
+      description: null,
+      duration_minutes: 60,
+      price_cop: 90000,
+      sort_order: 0,
+      is_active: true,
+    });
+  });
+
+  it("una casilla sin marcar oculta el servicio", () => {
+    const { is_active: _omit, ...rest } = form;
+    expect(serviceSchema.parse(rest).is_active).toBe(false);
+  });
+
+  it.each([
+    ["duration_minutes", "10"],
+    ["price_cop", "500"],
+    ["name", "ab"],
+  ])("rechaza %s = %s", (field, value) => {
+    expect(serviceSchema.safeParse({ ...form, [field]: value }).success).toBe(false);
+  });
+});
+
+describe("blockSchema", () => {
+  it("acepta fechas y horas válidas", () => {
+    expect(
+      blockSchema.safeParse({
+        startDate: "2026-12-24",
+        startTime: "00:00",
+        endDate: "2026-12-26",
+        endTime: "23:59",
+        reason: "",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rechaza horas inválidas", () => {
+    expect(
+      blockSchema.safeParse({
+        startDate: "2026-12-24",
+        startTime: "24:00",
+        endDate: "2026-12-26",
+        endTime: "23:59",
+      }).success,
+    ).toBe(false);
   });
 });

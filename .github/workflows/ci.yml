@@ -50,6 +50,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: calidad
+    env:
+      # Llaves de Wompi DE MENTIRA (no son secretos): deben ser las mismas de
+      # WOMPI_TEST en playwright.config.ts, porque la app se compila con ellas.
+      NEXT_PUBLIC_WOMPI_PUBLIC_KEY: pub_test_e2e
+      WOMPI_INTEGRITY_SECRET: test_integrity_e2e
+      WOMPI_EVENTS_SECRET: test_events_e2e
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

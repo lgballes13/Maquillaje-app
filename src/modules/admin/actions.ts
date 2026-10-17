@@ -1,10 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { siteConfig } from "@/config/site";
 import { errorState, safeFormValues, zodFieldErrors, type FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
+import { zonedDateTimeToUtc } from "@/lib/time";
 import { requireAdmin } from "@/modules/auth/session";
-import { businessRulesSchema, parseBusinessHoursForm, rulesChanged } from "./schemas";
+import {
+  blockSchema,
+  businessRulesSchema,
+  parseBusinessHoursForm,
+  rulesChanged,
+  serviceSchema,
+} from "./schemas";
 
 /*
  * Acciones del panel. Doble protección:
@@ -90,4 +99,90 @@ export async function saveBusinessHoursAction(
 
   revalidatePath("/admin/reglas");
   return { status: "success", message: "Horario guardado." };
+}
+
+export async function saveServiceAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin("/admin/servicios");
+  const values = safeFormValues(formData);
+
+  const parsed = serviceSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return errorState("Revisa los campos marcados.", zodFieldErrors(parsed.error), values);
+  }
+
+  const { id, ...service } = parsed.data;
+  const supabase = await createClient();
+  const { error } = id
+    ? await supabase.from("services").update(service).eq("id", id)
+    : await supabase.from("services").insert(service);
+
+  if (error) {
+    console.error("Error al guardar servicio", error.code, error.message);
+    return errorState("No se pudo guardar el servicio. Intenta de nuevo.", undefined, values);
+  }
+
+  revalidatePath("/admin/servicios");
+  revalidatePath("/agendar");
+  return {
+    status: "success",
+    message: id ? `Servicio «${service.name}» actualizado.` : `Servicio «${service.name}» creado.`,
+  };
+}
+
+export async function createBlockAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin("/admin/citas");
+  const values = safeFormValues(formData);
+
+  const parsed = blockSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return errorState("Revisa los campos marcados.", zodFieldErrors(parsed.error), values);
+  }
+
+  const { startDate, startTime, endDate, endTime, reason } = parsed.data;
+  let startsAt: Date;
+  let endsAt: Date;
+  try {
+    startsAt = zonedDateTimeToUtc(startDate, startTime, siteConfig.timeZone);
+    endsAt = zonedDateTimeToUtc(endDate, endTime, siteConfig.timeZone);
+  } catch {
+    return errorState("Revisa las fechas.", undefined, values);
+  }
+  if (endsAt <= startsAt) {
+    return errorState(
+      "Revisa los campos marcados.",
+      { endTime: ["El final debe ser después del inicio"] },
+      values,
+    );
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("blocked_periods").insert({
+    starts_at: startsAt.toISOString(),
+    ends_at: endsAt.toISOString(),
+    reason,
+  });
+  if (error) {
+    console.error("Error al bloquear horario", error.code, error.message);
+    return errorState(
+      error.code === "23514"
+        ? "Un bloqueo puede durar máximo 90 días."
+        : "No se pudo guardar el bloqueo. Intenta de nuevo.",
+      undefined,
+      values,
+    );
+  }
+
+  revalidatePath("/admin/citas");
+  return { status: "success", message: "Horario bloqueado." };
+}
+
+export async function deleteBlockAction(formData: FormData): Promise<void> {
+  await requireAdmin("/admin/citas");
+  const id = z.uuid().safeParse(formData.get("id"));
+  if (!id.success) return;
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("blocked_periods").delete().eq("id", id.data);
+  if (error) console.error("Error al quitar bloqueo", error.code, error.message);
+  revalidatePath("/admin/citas");
 }

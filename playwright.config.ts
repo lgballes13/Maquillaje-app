@@ -1,5 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 import { loadEnvConfig } from "@next/env";
+import { WOMPI_TEST } from "./e2e/helpers/wompi";
 
 // Carga .env.local (claves de Supabase local) igual que lo hace Next.js.
 loadEnvConfig(process.cwd());
@@ -59,6 +60,9 @@ export default defineConfig({
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
       NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+      NEXT_PUBLIC_WOMPI_PUBLIC_KEY: WOMPI_TEST.publicKey,
+      WOMPI_INTEGRITY_SECRET: WOMPI_TEST.integritySecret,
+      WOMPI_EVENTS_SECRET: WOMPI_TEST.eventsSecret,
     },
   },
 });
