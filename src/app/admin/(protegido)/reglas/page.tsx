@@ -41,6 +41,7 @@ export default async function BusinessRulesPage() {
             credit_validity_days: current.credit_validity_days,
             preorder_deposit_percent: Number(current.preorder_deposit_percent),
             preorder_delivery_days: current.preorder_delivery_days,
+            preorder_balance_days: current.preorder_balance_days,
             buffer_minutes: current.buffer_minutes,
             booking_hold_minutes: current.booking_hold_minutes,
             min_booking_notice_hours: current.min_booking_notice_hours,

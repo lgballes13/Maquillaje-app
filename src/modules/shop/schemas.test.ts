@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { checkoutSchema, cleanSearch, detectImageType, productSchema } from "./schemas";
+import {
+  checkoutSchema,
+  cleanSearch,
+  detectImageType,
+  orderStatusSchema,
+  preorderSchema,
+  productSchema,
+} from "./schemas";
 
 const A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
@@ -86,8 +93,10 @@ describe("productSchema", () => {
       stock: 12,
       category_id: null,
       is_active: true,
+      allow_preorder: false,
       description: null,
     });
+    expect(productSchema.parse({ ...product, allow_preorder: "on" }).allow_preorder).toBe(true);
   });
 
   it.each([
@@ -116,5 +125,43 @@ describe("detectImageType", () => {
     expect(detectImageType(new TextEncoder().encode("<svg onload=alert(1)>"))).toBeNull();
     expect(detectImageType(bytes(0x25, 0x50, 0x44, 0x46))).toBeNull(); // PDF
     expect(detectImageType(new Uint8Array())).toBeNull();
+  });
+});
+
+describe("preorderSchema", () => {
+  const preorder = {
+    productId: A,
+    quantity: "2",
+    deliveryMethod: "pickup",
+    recipientName: "Ana Pérez",
+    phone: "300 123 4567",
+    rulesVersion: "4",
+    acceptTerms: "on",
+  };
+
+  it("acepta una reserva para recoger y convierte las unidades en número", () => {
+    expect(preorderSchema.parse(preorder)).toMatchObject({ productId: A, quantity: 2 });
+  });
+
+  it("exige dirección para el envío, unidades válidas y aceptar las condiciones", () => {
+    const shipping = preorderSchema.safeParse({ ...preorder, deliveryMethod: "shipping" });
+    expect(shipping.error?.issues.map((issue) => issue.path[0])).toEqual(["address", "city"]);
+    expect(preorderSchema.safeParse({ ...preorder, quantity: "11" }).success).toBe(false);
+    expect(preorderSchema.safeParse({ ...preorder, quantity: "0" }).success).toBe(false);
+    expect(preorderSchema.safeParse({ ...preorder, acceptTerms: undefined }).success).toBe(false);
+  });
+
+  it("no acepta montos del navegador: los ignora", () => {
+    const result = preorderSchema.parse({ ...preorder, depositCop: "1", priceCop: "1" });
+    expect(result).not.toHaveProperty("depositCop");
+    expect(result).not.toHaveProperty("priceCop");
+  });
+});
+
+describe("orderStatusSchema", () => {
+  it("acepta «llegó» además de los estados del panel, y nada más", () => {
+    expect(orderStatusSchema.parse({ orderId: A, status: "arrived" }).status).toBe("arrived");
+    expect(orderStatusSchema.safeParse({ orderId: A, status: "paid" }).success).toBe(false);
+    expect(orderStatusSchema.safeParse({ orderId: A, status: "deposit_paid" }).success).toBe(false);
   });
 });

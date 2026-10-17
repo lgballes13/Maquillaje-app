@@ -4,7 +4,7 @@
 > una conversación nueva: léelo primero.
 
 **Última actualización:** 2026-10-17
-**Fase actual:** 4 · Tienda (terminada, pendiente de tu revisión y merge del PR)
+**Fase actual:** 5 · Preventa y lista de espera (terminada, pendiente de tu revisión y merge del PR)
 
 ## Plan de fases
 
@@ -15,7 +15,7 @@
 | 2    | Citas y pagos: servicios, disponibilidad, hold de 10 min, anti-solapamiento, política, anticipo, webhook | ✅ Terminada |
 | 3    | Ciclo de la cita: asistió/no asistió, reprogramar, cancelar, penalidades, recordatorios                  | ✅ Terminada |
 | 4    | Tienda: catálogo, búsqueda, carrito, checkout, stock atómico, pedidos                                    | ✅ Terminada |
-| 5    | Preventa y lista de espera                                                                               | ⏳ Pendiente |
+| 5    | Preventa y lista de espera                                                                               | ✅ Terminada |
 | 6    | Portafolio con autorización de fotos                                                                     | ⏳ Pendiente |
 | 7    | Panel admin completo: agenda, gestión, reportes, CSV                                                     | ⏳ Pendiente |
 | 8    | Legal (Ley 1581 y 1480), SEO, Lighthouse ≥ 90, respaldos, despliegue                                     | ⏳ Pendiente |
@@ -112,6 +112,26 @@ La Fase 2 se fusionó a `main` el 2026-10-17 (PR #9).
 - Pruebas: 178 unitarias, 177 de base de datos (pgTAP) y 43 E2E por navegador (5 nuevas de la
   tienda).
 
+La Fase 4 se fusionó a `main` el 2026-10-17 (PR #12).
+
+## Hecho en la Fase 5
+
+- Decisiones: preventa con anticipo (DT-031), saldo a favor también en la tienda (DT-032) y
+  lista de espera sin pago (DT-033).
+- Migraciones `20261017000900_estados_de_preventa.sql` y `20261017001000_preventa.sql`: estados
+  «reservado» y «llegó: paga el saldo», tipo de pedido, anticipo, saldo usado, plazo del saldo,
+  `allow_preorder` en productos, `product_waitlist` y funciones `create_preorder`,
+  `mark_preorder_arrived` y `expire_orders` (tarea diaria). `create_order` y
+  `prepare_order_payment` ahora descuentan el saldo a favor.
+- Páginas: el producto agotado muestra «Reservar» (con % de anticipo y días estimados) y
+  «Avísame cuando llegue»; `/tienda/[producto]/reservar` (unidades, entrega, montos, condiciones
+  de la preventa y aceptación); el pedido muestra anticipo, saldo y fecha límite, y cobra cada
+  etapa. El carrito muestra el saldo a favor que se descuenta.
+- Panel: filtro «Preventas» con «Marcar que llegó», opción «permitir reservarlo» en cada
+  producto, conteo de preventas y lista de espera, y el plazo del saldo en `/admin/reglas`.
+- Correos: «Reservaste…», «Llegó tu…: paga el saldo» y «Volvió…» (lista de espera).
+- Pruebas: 190 unitarias, 226 de base de datos (pgTAP) y 48 E2E por navegador (5 nuevas).
+
 ## Para activar pagos reales (cuando quieras)
 
 1. Crea tu cuenta en <https://comercios.wompi.co> y entra en modo **Pruebas**.
@@ -136,7 +156,7 @@ La Fase 2 se fusionó a `main` el 2026-10-17 (PR #9).
 - [x] Opciones de envío: recoger en el estudio o envío con tarifa fija
 - [ ] Tarifa de envío real (hoy $15.000 provisional) y dirección del estudio para recoger
 - [ ] Productos reales: nombres, precios con IVA, fotos y unidades
-- [ ] Preventa: % de anticipo y días estimados de entrega
+- [ ] Preventa: % de anticipo (hoy 50 %), días estimados de entrega (hoy 15) y plazo para pagar el saldo (hoy 7 días), todos provisionales y editables en el panel
 - [ ] Número de WhatsApp
 - [ ] ¿Una sola maquilladora al inicio? (la Fase 2 asume que sí: una sola agenda)
 - [ ] Colores y logo de la marca (los actuales son provisionales)
@@ -178,5 +198,11 @@ La Fase 2 se fusionó a `main` el 2026-10-17 (PR #9).
 - Tienda: las devoluciones de dinero (pedido pagado y cancelado, pago tardío sin stock) se hacen
   a mano en Wompi; el pedido queda «por revisar» en el panel.
 - Tienda: no hay correo cuando el pedido está listo o enviado; la clienta lo ve en «Mis pedidos».
+- Preventa: el texto de condiciones de la preventa es un borrador (revisión legal junto con el de
+  la tienda). La clienta no puede cancelar sola una reserva ya pagada: escribe y la admin la
+  cancela; el anticipo se devuelve a mano en Wompi.
+- Preventa: el tiempo de llegada es un estimado; la app no avisa si se pasa de esos días.
+- Lista de espera: el aviso sale cuando la admin guarda el producto con unidades desde el panel
+  (no si el stock cambia por otro camino, como una cancelación).
 - Las citas vencidas se marcan cuando alguien hace una reserva nueva; mientras tanto se ven como
   vencidas en pantalla. No hace falta un proceso programado.

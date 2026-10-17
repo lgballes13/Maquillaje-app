@@ -33,7 +33,9 @@ export default async function MyOrdersPage() {
                 className="block min-h-11 rounded-xl border border-border bg-card p-4 hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
               >
                 <span className="flex justify-between gap-2 font-semibold">
-                  <span>Pedido #{order.number}</span>
+                  <span>
+                    {order.kind === "preorder" ? "Preventa" : "Pedido"} #{order.number}
+                  </span>
                   <span>{formatCop(order.total_cop)}</span>
                 </span>
                 <span className="block text-sm">

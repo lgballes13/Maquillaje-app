@@ -53,7 +53,7 @@ export function policyPoints(rules: PolicyRules): string[] {
       `Puedes cambiar el horario o cancelar sin costo hasta ${rules.free_cancellation_hours} horas antes de la cita. Si cancelas, tu anticipo queda como saldo a favor para tu próxima cita.`,
       `Si cancelas con menos de ${rules.free_cancellation_hours} horas, se descuenta el ${penalty} % del anticipo y el resto queda como saldo a favor.`,
       `Si no asistes, tienes ${rules.reschedule_window_hours} horas desde la hora de la cita para reprogramar: se descuenta el ${penalty} % del anticipo y el resto se abona a la nueva cita. Después de ese plazo pierdes el anticipo.`,
-      `El saldo a favor vence ${rules.credit_validity_days} días después de generarse y solo se usa para el anticipo de otra cita.`,
+      `El saldo a favor vence ${rules.credit_validity_days} días después de generarse y se usa en el anticipo de otra cita o en compras de la tienda.`,
     );
   }
   return points;
@@ -219,4 +219,6 @@ export const CREDIT_REASON_LABELS = {
   applied_to_booking: "Usado en una reserva",
   hold_released: "Devuelto: reserva sin pagar",
   expired: "Vencido",
+  applied_to_order: "Usado en una compra de la tienda",
+  preorder_unpaid: "Preventa sin pagar el saldo",
 } as const;

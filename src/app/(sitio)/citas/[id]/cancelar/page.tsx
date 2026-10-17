@@ -67,7 +67,7 @@ export default async function CancelAppointmentPage({ params }: PageProps<"/cita
             )}
             <p className="mt-2 text-sm" data-testid="credit-expiry">
               El saldo a favor vence en {rules.credit_validity_days} días (el {expiresOn}) y se usa
-              solo para el anticipo de otra cita.
+              en el anticipo de otra cita o en compras de la tienda.
             </p>
             {action.kind === "change" ? (
               <p className="mt-3 text-sm">

@@ -24,6 +24,40 @@ export type CartItem = z.infer<typeof cartItemSchema>;
 
 const PHONE = /^\+?[0-9 ]{7,20}$/;
 
+/** Datos de entrega y aceptación: los mismos para comprar y para reservar. */
+const deliveryShape = {
+  deliveryMethod: z.enum(["pickup", "shipping"], { message: "Elige cómo recibir tu pedido" }),
+  recipientName: z
+    .string()
+    .trim()
+    .min(3, "Escribe el nombre de quien recibe")
+    .max(100, "Máximo 100 caracteres"),
+  phone: z
+    .string()
+    .trim()
+    .regex(PHONE, "Escribe un celular válido (solo números, ej.: 300 123 4567)"),
+  address: z.string().trim().max(200, "Máximo 200 caracteres").optional().default(""),
+  city: z.string().trim().max(80, "Máximo 80 caracteres").optional().default(""),
+  notes: z.string().trim().max(500, "Máximo 500 caracteres").optional().default(""),
+  rulesVersion: z.coerce.number().int().positive(),
+  acceptTerms: z.literal("on", {
+    message: "Debes aceptar las condiciones de compra para continuar",
+  }),
+};
+
+function requireShippingAddress(
+  data: { deliveryMethod: string; address: string; city: string },
+  ctx: z.RefinementCtx,
+) {
+  if (data.deliveryMethod !== "shipping") return;
+  if (data.address.length < 5) {
+    ctx.addIssue({ code: "custom", path: ["address"], message: "Escribe la dirección de envío" });
+  }
+  if (data.city.length < 2) {
+    ctx.addIssue({ code: "custom", path: ["city"], message: "Escribe la ciudad" });
+  }
+}
+
 /** Lo que envía el carrito al pagar: productos, entrega y aceptación. */
 export const checkoutSchema = z
   .object({
@@ -38,35 +72,28 @@ export const checkoutSchema = z
         }
       })
       .pipe(cartSchema.min(1, "Tu carrito está vacío")),
-    deliveryMethod: z.enum(["pickup", "shipping"], { message: "Elige cómo recibir tu pedido" }),
-    recipientName: z
-      .string()
-      .trim()
-      .min(3, "Escribe el nombre de quien recibe")
-      .max(100, "Máximo 100 caracteres"),
-    phone: z
-      .string()
-      .trim()
-      .regex(PHONE, "Escribe un celular válido (solo números, ej.: 300 123 4567)"),
-    address: z.string().trim().max(200, "Máximo 200 caracteres").optional().default(""),
-    city: z.string().trim().max(80, "Máximo 80 caracteres").optional().default(""),
-    notes: z.string().trim().max(500, "Máximo 500 caracteres").optional().default(""),
-    rulesVersion: z.coerce.number().int().positive(),
-    acceptTerms: z.literal("on", {
-      message: "Debes aceptar las condiciones de compra para continuar",
-    }),
+    ...deliveryShape,
   })
-  .superRefine((data, ctx) => {
-    if (data.deliveryMethod !== "shipping") return;
-    if (data.address.length < 5) {
-      ctx.addIssue({ code: "custom", path: ["address"], message: "Escribe la dirección de envío" });
-    }
-    if (data.city.length < 2) {
-      ctx.addIssue({ code: "custom", path: ["city"], message: "Escribe la ciudad" });
-    }
-  });
+  .superRefine(requireShippingAddress);
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
+
+/** Reserva (preventa) de un producto agotado: un solo producto por pedido. */
+export const preorderSchema = z
+  .object({
+    productId: z.uuid("Producto inválido"),
+    quantity: z.coerce
+      .number({ message: "Elige cuántas unidades" })
+      .int("Elige cuántas unidades")
+      .min(1, "Mínimo 1 unidad")
+      .max(MAX_UNITS_PER_PRODUCT, `Máximo ${MAX_UNITS_PER_PRODUCT} unidades`),
+    ...deliveryShape,
+  })
+  .superRefine(requireShippingAddress);
+
+export type PreorderInput = z.infer<typeof preorderSchema>;
+
+export const productIdSchema = z.object({ productId: z.uuid("Producto inválido") });
 
 export const orderIdSchema = z.object({ orderId: z.uuid("Pedido inválido") });
 
@@ -118,6 +145,7 @@ export const productSchema = z.object({
   stock: integer("Unidades", 0, 100_000),
   sort_order: integer("Orden", 0, 1000),
   is_active: checkbox,
+  allow_preorder: checkbox,
 });
 
 export type ProductInput = z.infer<typeof productSchema>;
@@ -164,7 +192,8 @@ export function detectImageType(bytes: Uint8Array): ImageType | null {
 
 export const ORDER_STATUS_TARGETS = ["ready", "shipped", "delivered", "cancelled"] as const;
 
+/** Botones del panel: los estados de set_order_status y «llegó» (mark_preorder_arrived). */
 export const orderStatusSchema = z.object({
   orderId: z.uuid(),
-  status: z.enum(ORDER_STATUS_TARGETS),
+  status: z.enum([...ORDER_STATUS_TARGETS, "arrived"]),
 });

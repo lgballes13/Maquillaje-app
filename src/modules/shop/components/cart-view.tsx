@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useActionState, useEffect, useId, useState } from "react";
 import { CheckboxField } from "@/components/forms/checkbox-field";
-import { FormField } from "@/components/forms/form-field";
 import { FormMessage } from "@/components/forms/form-message";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -14,9 +13,10 @@ import { formatCop } from "@/modules/booking/policy";
 import { createOrderAction, quoteCartAction } from "../actions";
 import { removeItem, setItemQuantity, updateCart } from "../cart";
 import { UNOPTIMIZED_IMAGES } from "../images";
-import { DELIVERY_LABELS, purchaseTerms, type DeliveryMethod } from "../labels";
+import { purchaseTerms, type DeliveryMethod } from "../labels";
 import type { CartQuote } from "../queries";
 import { MAX_UNITS_PER_PRODUCT } from "../schemas";
+import { DeliveryFields } from "./delivery-fields";
 import { useCart, useHydrated } from "./use-cart";
 
 /**
@@ -28,10 +28,13 @@ export function CartView({
   signedIn,
   defaultName,
   defaultPhone,
+  creditCop,
 }: {
   signedIn: boolean;
   defaultName: string;
   defaultPhone: string;
+  /** Saldo a favor vigente: se descuenta solo al crear el pedido. */
+  creditCop: number;
 }) {
   const items = useCart();
   const hydrated = useHydrated();
@@ -82,6 +85,7 @@ export function CartView({
       signedIn={signedIn}
       defaultName={defaultName}
       defaultPhone={defaultPhone}
+      creditCop={creditCop}
       itemsJson={key}
     />
   );
@@ -93,6 +97,7 @@ function CartContents({
   signedIn,
   defaultName,
   defaultPhone,
+  creditCop,
   itemsJson,
 }: {
   quote: CartQuote;
@@ -100,17 +105,18 @@ function CartContents({
   signedIn: boolean;
   defaultName: string;
   defaultPhone: string;
+  creditCop: number;
   itemsJson: string;
 }) {
   const [state, formAction] = useActionState(createOrderAction, initialFormState);
   const [delivery, setDelivery] = useState<DeliveryMethod>(
     state.values?.deliveryMethod === "shipping" ? "shipping" : "pickup",
   );
-  const notesId = useId();
   const hasProblems = quote.missing.length > 0 || quote.lines.some((line) => line.problem);
   const shipping = delivery === "shipping" ? quote.shippingFeeCop : 0;
   const total = quote.subtotalCop + shipping;
-  const value = (name: string, fallback = "") => state.values?.[name] ?? fallback;
+  const credit = signedIn ? Math.min(creditCop, total) : 0;
+  const toPay = total - credit;
 
   return (
     <div className="mt-6 grid gap-6">
@@ -205,92 +211,14 @@ function CartContents({
         <input type="hidden" name="items" value={itemsJson} />
         <input type="hidden" name="rulesVersion" value={quote.rulesVersion} />
 
-        <fieldset className="grid gap-3 rounded-xl border border-border bg-card p-5">
-          <legend className="px-1 text-lg font-semibold">¿Cómo quieres recibirlo?</legend>
-          {(["pickup", "shipping"] as const).map((method) => (
-            <label
-              key={method}
-              className="flex min-h-11 cursor-pointer items-start gap-3 rounded-md border border-border p-3 text-sm has-checked:border-primary"
-            >
-              <input
-                type="radio"
-                name="deliveryMethod"
-                value={method}
-                // No controlado: si React reinicia el formulario tras un error, vuelve a la opción elegida.
-                defaultChecked={delivery === method}
-                onChange={() => setDelivery(method)}
-                className="mt-0.5 size-5 shrink-0 accent-primary"
-              />
-              <span>
-                <span className="font-medium">{DELIVERY_LABELS[method]}</span>
-                <span className="block text-muted-foreground">
-                  {method === "pickup"
-                    ? "Sin costo. Te avisamos cuando esté listo para recoger en el estudio."
-                    : quote.shippingFeeCop > 0
-                      ? `Tarifa fija de ${formatCop(quote.shippingFeeCop)}.`
-                      : "Envío gratis."}
-                </span>
-              </span>
-            </label>
-          ))}
-
-          <div className="mt-2 grid gap-4 sm:grid-cols-2">
-            <FormField
-              name="recipientName"
-              label="Nombre de quien recibe"
-              autoComplete="name"
-              required
-              maxLength={100}
-              defaultValue={value("recipientName", defaultName)}
-              errors={state.fieldErrors?.recipientName}
-            />
-            <FormField
-              name="phone"
-              label="Celular"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              required
-              maxLength={20}
-              hint="Para avisarte del pedido."
-              defaultValue={value("phone", defaultPhone)}
-              errors={state.fieldErrors?.phone}
-            />
-          </div>
-          {delivery === "shipping" ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                name="address"
-                label="Dirección de envío"
-                autoComplete="street-address"
-                required
-                maxLength={200}
-                defaultValue={value("address")}
-                errors={state.fieldErrors?.address}
-              />
-              <FormField
-                name="city"
-                label="Ciudad"
-                autoComplete="address-level2"
-                required
-                maxLength={80}
-                defaultValue={value("city")}
-                errors={state.fieldErrors?.city}
-              />
-            </div>
-          ) : null}
-          <div className="grid gap-2">
-            <Label htmlFor={notesId}>Notas del pedido (opcional)</Label>
-            <textarea
-              id={notesId}
-              name="notes"
-              rows={2}
-              maxLength={500}
-              defaultValue={value("notes")}
-              className="min-h-11 w-full rounded-md border border-input bg-card px-3 py-2 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-            />
-          </div>
-        </fieldset>
+        <DeliveryFields
+          state={state}
+          delivery={delivery}
+          onDeliveryChange={setDelivery}
+          shippingFeeCop={quote.shippingFeeCop}
+          defaultName={defaultName}
+          defaultPhone={defaultPhone}
+        />
 
         <section
           aria-labelledby="titulo-total"
@@ -312,6 +240,18 @@ function CartContents({
               <dt>Total (IVA incluido)</dt>
               <dd data-testid="total">{formatCop(total)}</dd>
             </div>
+            {credit > 0 ? (
+              <>
+                <div className="flex justify-between gap-2">
+                  <dt>Tu saldo a favor</dt>
+                  <dd data-testid="credit-applied">−{formatCop(credit)}</dd>
+                </div>
+                <div className="flex justify-between gap-2 text-base font-semibold">
+                  <dt>Pagas ahora</dt>
+                  <dd data-testid="to-pay">{formatCop(toPay)}</dd>
+                </div>
+              </>
+            ) : null}
           </dl>
 
           <h3 className="mt-5 font-semibold">Antes de pagar</h3>
@@ -344,7 +284,7 @@ function CartContents({
                   </Button>
                 ) : (
                   <SubmitButton pendingText="Apartando tus productos…" className="w-full sm:w-auto">
-                    Continuar al pago
+                    {toPay === 0 ? "Confirmar pedido con mi saldo" : "Continuar al pago"}
                   </SubmitButton>
                 )}
               </>

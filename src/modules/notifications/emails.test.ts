@@ -4,6 +4,9 @@ import {
   appointmentReminderEmail,
   escapeHtml,
   orderPaidEmail,
+  preorderArrivedEmail,
+  preorderDepositEmail,
+  waitlistBackInStockEmail,
   type AppointmentEmailData,
   type OrderEmailData,
 } from "./emails";
@@ -98,5 +101,54 @@ describe("orderPaidEmail", () => {
     const email = orderPaidEmail({ ...order, delivery: "pickup", shippingCop: 0, address: null });
     expect(email.text).toContain("listo para recoger");
     expect(email.text).not.toContain("Envío:");
+  });
+});
+
+describe("correos de preventa y lista de espera", () => {
+  const preorder = {
+    businessName: "Estudio de Prueba",
+    customerName: "Ana <b>",
+    orderNumber: 12,
+    productName: "Paleta <Nude>",
+    quantity: 2,
+    depositCop: 50000,
+    balanceCop: 65000,
+    deliveryDays: 15,
+    orderUrl: "https://ejemplo.com/pedidos/abc",
+  };
+
+  it("el anticipo confirma la reserva, el tiempo estimado y el saldo", () => {
+    const email = preorderDepositEmail(preorder);
+    expect(email.subject).toContain("#12");
+    expect(email.text).toContain("anticipo de $");
+    expect(email.text).toContain("15 días");
+    expect(email.text).toContain("65.000");
+    expect(email.html).not.toContain("<Nude>");
+    expect(email.html).toContain("Paleta &lt;Nude&gt;");
+  });
+
+  it("la llegada pide pagar el saldo antes de la fecha y explica el saldo a favor", () => {
+    const email = preorderArrivedEmail({
+      ...preorder,
+      dueOn: "24/10/2026, 3:00 p. m.",
+      balanceDays: 7,
+    });
+    expect(email.text).toContain("antes del 24/10/2026");
+    expect(email.text).toContain("7 días");
+    expect(email.text).toContain("saldo a favor");
+    expect(email.html).toContain("Pagar el saldo");
+    expect(email.html).not.toContain("<b>");
+  });
+
+  it("la lista de espera avisa que volvió y enlaza al producto", () => {
+    const email = waitlistBackInStockEmail({
+      businessName: "Estudio de Prueba",
+      customerName: null,
+      productName: "Labial <i>",
+      productUrl: "https://ejemplo.com/tienda/abc",
+    });
+    expect(email.subject).toContain("Volvió");
+    expect(email.text).toContain("https://ejemplo.com/tienda/abc");
+    expect(email.html).not.toContain("<i>");
   });
 });

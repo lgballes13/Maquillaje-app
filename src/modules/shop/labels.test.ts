@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { displayOrderStatus, nextOrderActions, purchaseTerms, shopErrorMessage } from "./labels";
+import {
+  displayOrderStatus,
+  isBalanceOverdue,
+  nextOrderActions,
+  preorderDeposit,
+  preorderTerms,
+  purchaseTerms,
+  shopErrorMessage,
+} from "./labels";
 
 describe("nextOrderActions", () => {
   it("un pedido pagado se marca listo (recoger) o enviado (envío), o se cancela", () => {
@@ -56,5 +64,59 @@ describe("textos", () => {
     expect(terms).toMatch(/IVA/);
     expect(terms).toMatch(/10 minutos/);
     expect(terms).toMatch(/retracto/i);
+  });
+});
+
+describe("preventa", () => {
+  const now = new Date("2026-10-17T15:00:00Z");
+
+  it("una preventa con anticipo puede marcarse como llegada o cancelarse", () => {
+    expect(nextOrderActions({ status: "deposit_paid", delivery_method: "pickup" })).toEqual([
+      "arrived",
+      "cancelled",
+    ]);
+    expect(nextOrderActions({ status: "awaiting_balance", delivery_method: "shipping" })).toEqual([
+      "cancelled",
+    ]);
+  });
+
+  it("si venció el plazo del saldo, la preventa se ve cancelada", () => {
+    const order = {
+      status: "awaiting_balance" as const,
+      hold_expires_at: null,
+      balance_due_at: "2026-10-17T14:00:00Z",
+    };
+    expect(isBalanceOverdue(order, now)).toBe(true);
+    expect(displayOrderStatus(order, now)).toBe("cancelled");
+    const onTime = { ...order, balance_due_at: "2026-10-20T14:00:00Z" };
+    expect(isBalanceOverdue(onTime, now)).toBe(false);
+    expect(displayOrderStatus(onTime, now)).toBe("awaiting_balance");
+  });
+
+  it("el anticipo se redondea hacia arriba al peso, igual que la base de datos", () => {
+    expect(preorderDeposit(100000, 50)).toBe(50000);
+    expect(preorderDeposit(33333, 50)).toBe(16667);
+    expect(preorderDeposit(45000, 33.33)).toBe(14999);
+    expect(preorderDeposit(45000, 0)).toBe(0);
+  });
+
+  it("las condiciones informan anticipo, tiempo estimado, plazo del saldo y retracto", () => {
+    const text = preorderTerms({
+      depositPercent: 50,
+      deliveryDays: 15,
+      balanceDays: 7,
+      creditValidityDays: 15,
+      holdMinutes: 10,
+    }).join(" ");
+    expect(text).toContain("anticipo del 50 %");
+    expect(text).toContain("15 días");
+    expect(text).toContain("tienes 7 días para pagar el saldo");
+    expect(text).toContain("saldo a favor");
+    expect(text).toContain("retracto");
+  });
+
+  it("explica los errores de la reserva", () => {
+    expect(shopErrorMessage("in_stock")).toMatch(/unidades disponibles/);
+    expect(shopErrorMessage("preorder_unavailable")).toMatch(/no se puede reservar/);
   });
 });

@@ -14,25 +14,42 @@ export const metadata: Metadata = { title: "Productos" };
 
 export default async function AdminProductsPage() {
   const supabase = await createClient();
-  const [{ data: products }, { data: categories }] = await Promise.all([
-    supabase
-      .from("products")
-      .select(
-        "id, name, description, category_id, price_cop, stock, sort_order, is_active, product_images(id, storage_path, alt_text, sort_order)",
-      )
-      .order("is_active", { ascending: false })
-      .order("sort_order")
-      .order("name"),
-    supabase
-      .from("product_categories")
-      .select("id, name, sort_order, is_active")
-      .order("sort_order")
-      .order("name"),
-  ]);
+  const [{ data: products }, { data: categories }, { data: preorders }, { data: waitlist }] =
+    await Promise.all([
+      supabase
+        .from("products")
+        .select(
+          "id, name, description, category_id, price_cop, stock, sort_order, is_active, allow_preorder, product_images(id, storage_path, alt_text, sort_order)",
+        )
+        .order("is_active", { ascending: false })
+        .order("sort_order")
+        .order("name"),
+      supabase
+        .from("product_categories")
+        .select("id, name, sort_order, is_active")
+        .order("sort_order")
+        .order("name"),
+      // Preventas con anticipo esperando que llegue el producto.
+      supabase
+        .from("orders")
+        .select("order_items(product_id, quantity)")
+        .eq("kind", "preorder")
+        .eq("status", "deposit_paid")
+        .limit(1000),
+      supabase.from("product_waitlist").select("product_id").is("notified_at", null).limit(5000),
+    ]);
   const availability = await getAvailability(
     (products ?? []).filter((p) => p.is_active).map((p) => p.id),
   );
   const categoryNames = new Map((categories ?? []).map((c) => [c.id, c.name]));
+  const reservedUnits = new Map<string, number>();
+  for (const item of (preorders ?? []).flatMap((order) => order.order_items)) {
+    reservedUnits.set(item.product_id, (reservedUnits.get(item.product_id) ?? 0) + item.quantity);
+  }
+  const waiting = new Map<string, number>();
+  for (const row of waitlist ?? []) {
+    waiting.set(row.product_id, (waiting.get(row.product_id) ?? 0) + 1);
+  }
 
   return (
     <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
@@ -74,6 +91,12 @@ export default async function AdminProductsPage() {
                         ? ` · ${categoryNames.get(product.category_id) ?? ""}`
                         : ""}
                       {product.is_active ? "" : " · Oculto"}
+                      {reservedUnits.get(product.id)
+                        ? ` · ${reservedUnits.get(product.id)} en preventa`
+                        : ""}
+                      {waiting.get(product.id)
+                        ? ` · ${waiting.get(product.id)} en lista de espera`
+                        : ""}
                       {images.length === 0 ? " · Sin fotos" : ""}
                     </span>
                   </summary>

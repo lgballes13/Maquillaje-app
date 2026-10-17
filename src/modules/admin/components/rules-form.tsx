@@ -128,6 +128,15 @@ const FIELDS: {
     step: 1,
     unit: "días",
   },
+  {
+    name: "preorder_balance_days",
+    label: "Plazo para pagar el saldo de preventa",
+    hint: "Días que tiene la clienta para pagar el saldo cuando le avisamos que llegó. Si no paga, el anticipo queda como saldo a favor.",
+    min: 1,
+    max: 60,
+    step: 1,
+    unit: "días",
+  },
 ];
 
 export function RulesForm({ current }: { current: Rules }) {
