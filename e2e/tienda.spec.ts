@@ -3,6 +3,7 @@ import { expect, test } from "./fixtures";
 import { enrollTotp, login } from "./helpers/auth";
 import { expectNoA11yViolations } from "./helpers/booking";
 import { waitForEmail } from "./helpers/mailpit";
+import { openMainNav } from "./helpers/nav";
 import {
   createTestProduct,
   createTestUser,
@@ -48,10 +49,7 @@ async function readCheckout(page: Page) {
 test.describe("Catálogo", () => {
   test("se busca por nombre, se filtra por categoría y se ve el detalle", async ({ page }) => {
     await page.goto("/");
-    await page
-      .getByRole("navigation", { name: "Principal" })
-      .getByRole("link", { name: "Tienda" })
-      .click();
+    await (await openMainNav(page)).getByRole("link", { name: "Tienda" }).click();
     await expect(page.getByRole("heading", { name: "Tienda", level: 1 })).toBeVisible();
     await expectNoA11yViolations(page);
 

@@ -508,3 +508,23 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   verde sin hacer nada.
 - No cubre Storage. Si se pasa a Supabase Pro, sus respaldos diarios reemplazan o complementan
   este flujo.
+
+## DT-042 · Identidad visual de ROYMAKEUP (rediseño)
+
+**Fecha:** 2026-10-19 · **Estado:** vigente
+
+- Paleta en `globals.css`: marfil cálido de fondo, borgoña como color principal, ciruela para
+  títulos y secciones oscuras, rosa empolvado y dorado suave para detalles. Cada par texto/fondo
+  se midió (todos ≥ 4.5:1). El dorado claro (`--gold`) es solo decorativo o va sobre ciruela; para
+  texto dorado sobre marfil se usa `--gold-foreground`.
+- Tipografías con `next/font` (se sirven desde nuestro dominio): Cormorant Garamond para `h1`–`h3`
+  y el logo, Manrope para el resto. Los títulos toman la serif por defecto desde la capa base.
+- El nombre del logo sale de `NEXT_PUBLIC_BUSINESS_NAME` (valor por defecto: ROYMAKEUP). En
+  Vercel hay que poner ese valor para que se vea en el sitio publicado.
+- Encabezado fijo arriba. En el celular el menú va detrás de un botón «Menú» (aria-expanded,
+  se cierra con Escape, al elegir una opción y al cambiar de página); ingresar y carrito siguen
+  visibles como íconos con nombre accesible.
+- Imágenes: no se pueden descargar fotos de bancos de imágenes desde el entorno de trabajo ni
+  generar fotos realistas. Se dibujan ilustraciones editoriales propias en SVG
+  (`design/ilustraciones/`) y se exportan a WebP en `public/images/`. Para usar una foto real,
+  se reemplaza el archivo WebP con el mismo nombre (proporción 4:5 en el hero).

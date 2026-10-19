@@ -21,7 +21,8 @@
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts && prettier --write src/lib/supabase/database.types.ts",
-    "lighthouse": "lhci autorun"
+    "lighthouse": "lhci autorun",
+    "ilustraciones": "node scripts/ilustraciones.mjs"
   },
   "dependencies": {
     "@sentry/nextjs": "^11.8.0",

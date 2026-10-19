@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1500" width="1200" height="1500">
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#f6e4dc"/>
+      <stop offset="0.55" stop-color="#ecc9c3"/>
+      <stop offset="1" stop-color="#d9a9a6"/>
+    </linearGradient>
+    <radialGradient id="luz" cx="0.28" cy="0.18" r="0.75">
+      <stop offset="0" stop-color="#fff8f0" stop-opacity="0.95"/>
+      <stop offset="0.5" stop-color="#fff3ea" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#fff3ea" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mesa" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e7c3bd"/>
+      <stop offset="1" stop-color="#c98f8f"/>
+    </linearGradient>
+    <linearGradient id="seda" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7a2440"/>
+      <stop offset="0.35" stop-color="#a5465f"/>
+      <stop offset="0.55" stop-color="#6a1d36"/>
+      <stop offset="0.8" stop-color="#93354f"/>
+      <stop offset="1" stop-color="#4f1428"/>
+    </linearGradient>
+    <linearGradient id="oro" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8f6a32"/>
+      <stop offset="0.18" stop-color="#c9a15e"/>
+      <stop offset="0.38" stop-color="#f6e2b0"/>
+      <stop offset="0.55" stop-color="#d4ae6a"/>
+      <stop offset="0.85" stop-color="#9d7438"/>
+      <stop offset="1" stop-color="#6e4f22"/>
+    </linearGradient>
+    <linearGradient id="oroV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3dda8"/>
+      <stop offset="0.5" stop-color="#c79c58"/>
+      <stop offset="1" stop-color="#7c5a28"/>
+    </linearGradient>
+    <linearGradient id="labial" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4a0f22"/>
+      <stop offset="0.3" stop-color="#8e2443"/>
+      <stop offset="0.45" stop-color="#c2546f"/>
+      <stop offset="0.62" stop-color="#8a2140"/>
+      <stop offset="1" stop-color="#3f0b1c"/>
+    </linearGradient>
+    <linearGradient id="estuche" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2a0b17"/>
+      <stop offset="0.3" stop-color="#5a1a30"/>
+      <stop offset="0.45" stop-color="#8c3a54"/>
+      <stop offset="0.6" stop-color="#511628"/>
+      <stop offset="1" stop-color="#1f0710"/>
+    </linearGradient>
+    <radialGradient id="polvo" cx="0.42" cy="0.38" r="0.7">
+      <stop offset="0" stop-color="#f6d4c4"/>
+      <stop offset="0.6" stop-color="#e6ad9a"/>
+      <stop offset="1" stop-color="#c88573"/>
+    </radialGradient>
+    <radialGradient id="espejo" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#fffaf4"/>
+      <stop offset="0.45" stop-color="#f0d6cf"/>
+      <stop offset="1" stop-color="#c79a97"/>
+    </radialGradient>
+    <linearGradient id="mango" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9c3b57"/>
+      <stop offset="0.3" stop-color="#c7637d"/>
+      <stop offset="0.5" stop-color="#7d2440"/>
+      <stop offset="1" stop-color="#3d0c1c"/>
+    </linearGradient>
+    <linearGradient id="cerdas" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3b2a26"/>
+      <stop offset="0.45" stop-color="#7a5a4c"/>
+      <stop offset="0.8" stop-color="#d9b9a2"/>
+      <stop offset="1" stop-color="#f3dccb"/>
+    </linearGradient>
+    <radialGradient id="petalo" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#e9a3ad"/>
+      <stop offset="1" stop-color="#a8405a"/>
+    </radialGradient>
+    <filter id="sombra" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
+    <filter id="suave" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <filter id="brillo" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+    <filter id="grano">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.06"/></feComponentTransfer>
+    </filter>
+    <pattern id="textura" width="18" height="18" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="5" r="1.1" fill="#fff4ec" opacity="0.35"/>
+      <circle cx="13" cy="12" r="0.9" fill="#b97464" opacity="0.25"/>
+    </pattern>
+  </defs>
+
+  <!-- Fondo de estudio con luz lateral -->
+  <rect width="1200" height="1500" fill="url(#fondo)"/>
+  <rect width="1200" height="1500" fill="url(#luz)"/>
+  <!-- Arco dorado de fondo -->
+  <path d="M250 1010 V520 A350 350 0 0 1 950 520 V1010" fill="none" stroke="#d9b06b" stroke-width="3" opacity="0.7"/>
+  <path d="M290 1010 V535 A310 310 0 0 1 910 535 V1010" fill="#f8e9e1" opacity="0.35"/>
+
+  <!-- Mesa -->
+  <path d="M0 1010 H1200 V1500 H0 Z" fill="url(#mesa)"/>
+  <rect y="1004" width="1200" height="10" fill="#f4dcd3" opacity="0.6"/>
+
+  <!-- Seda borgoña -->
+  <path d="M0 1080 C180 1020 320 1130 470 1110 C640 1088 700 1210 860 1230 C1000 1248 1100 1190 1200 1160 V1500 H0 Z" fill="url(#seda)"/>
+  <path d="M0 1180 C200 1120 300 1260 520 1250 C700 1242 760 1350 950 1360 C1060 1366 1140 1330 1200 1310 V1500 H0 Z" fill="#5a1730" opacity="0.75"/>
+  <path d="M60 1150 C260 1100 360 1190 520 1180 C680 1170 760 1280 930 1290" fill="none" stroke="#e7a0b0" stroke-width="6" opacity="0.35" filter="url(#suave)"/>
+  <path d="M0 1300 C220 1250 380 1370 600 1370 C800 1370 900 1450 1200 1420" fill="none" stroke="#c46a83" stroke-width="10" opacity="0.3" filter="url(#suave)"/>
+
+  <!-- Compacto: sombra, tapa con espejo y polvo -->
+  <ellipse cx="390" cy="1080" rx="250" ry="70" fill="#4a1a24" opacity="0.35" filter="url(#sombra)"/>
+  <g transform="rotate(-8 390 820)">
+    <ellipse cx="390" cy="820" rx="210" ry="230" fill="url(#oroV)"/>
+    <ellipse cx="390" cy="820" rx="192" ry="212" fill="url(#espejo)"/>
+    <path d="M250 700 C300 620 380 600 450 610" fill="none" stroke="#ffffff" stroke-width="14" opacity="0.55" stroke-linecap="round" filter="url(#brillo)"/>
+  </g>
+  <ellipse cx="390" cy="1045" rx="235" ry="78" fill="url(#oro)"/>
+  <ellipse cx="390" cy="1035" rx="222" ry="70" fill="#f1d9a6"/>
+  <ellipse cx="390" cy="1036" rx="196" ry="58" fill="url(#polvo)"/>
+  <ellipse cx="390" cy="1036" rx="196" ry="58" fill="url(#textura)"/>
+  <path d="M260 1020 C320 995 420 992 500 1010" fill="none" stroke="#fff1e8" stroke-width="8" opacity="0.5" filter="url(#brillo)"/>
+
+  <!-- Labial de pie -->
+  <ellipse cx="790" cy="1205" rx="120" ry="30" fill="#3d0c1c" opacity="0.45" filter="url(#sombra)"/>
+  <path d="M715 670 L715 600 C715 560 740 520 790 470 L865 545 L865 670 Z" fill="url(#labial)"/>
+  <path d="M790 470 L865 545" stroke="#e48aa0" stroke-width="5" opacity="0.6" filter="url(#brillo)"/>
+  <path d="M745 590 C745 560 760 535 780 515" stroke="#f2b4c2" stroke-width="8" fill="none" opacity="0.45" stroke-linecap="round" filter="url(#brillo)"/>
+  <rect x="702" y="665" width="176" height="150" rx="6" fill="url(#oro)"/>
+  <rect x="702" y="665" width="176" height="10" fill="#f8e7bb" opacity="0.6"/>
+  <rect x="688" y="808" width="204" height="380" rx="10" fill="url(#estuche)"/>
+  <rect x="688" y="808" width="204" height="40" rx="8" fill="url(#oro)"/>
+  <rect x="688" y="1150" width="204" height="38" rx="8" fill="url(#oro)"/>
+  <rect x="770" y="860" width="10" height="280" fill="#d89aaa" opacity="0.35" filter="url(#brillo)"/>
+  <text x="790" y="1010" font-family="Georgia, serif" font-size="30" letter-spacing="6" fill="#d9b06b" text-anchor="middle" transform="rotate(-90 790 1010)">ROY</text>
+
+  <!-- Brocha recostada -->
+  <ellipse cx="640" cy="1300" rx="420" ry="34" fill="#2a0812" opacity="0.4" filter="url(#sombra)"/>
+  <g transform="rotate(-11 620 1250)">
+    <rect x="300" y="1228" width="560" height="44" rx="22" fill="url(#mango)"/>
+    <rect x="320" y="1234" width="520" height="8" rx="4" fill="#f0a9bb" opacity="0.4" filter="url(#brillo)"/>
+    <path d="M850 1220 L960 1206 L960 1294 L850 1280 Z" fill="url(#oroV)"/>
+    <rect x="850" y="1220" width="12" height="60" fill="#f8e7bb" opacity="0.5"/>
+    <path d="M958 1204 C1030 1170 1110 1180 1140 1250 C1110 1320 1030 1330 958 1296 Z" fill="url(#cerdas)"/>
+    <path d="M980 1232 C1040 1222 1090 1230 1120 1248" fill="none" stroke="#fbe8d8" stroke-width="5" opacity="0.6" filter="url(#brillo)"/>
+  </g>
+
+  <!-- Pétalos -->
+  <g opacity="0.95">
+    <path d="M140 1360 C120 1320 160 1290 200 1300 C230 1330 210 1380 170 1385 Z" fill="url(#petalo)"/>
+    <path d="M1040 1080 C1030 1045 1070 1025 1100 1040 C1120 1070 1095 1105 1065 1105 Z" fill="url(#petalo)" transform="rotate(20 1070 1070)"/>
+    <path d="M560 1430 C545 1400 580 1380 610 1392 C630 1420 610 1452 580 1452 Z" fill="url(#petalo)"/>
+  </g>
+
+  <!-- Destellos dorados -->
+  <g fill="#f6dfa4" filter="url(#brillo)">
+    <circle cx="980" cy="420" r="5"/><circle cx="1030" cy="520" r="3"/><circle cx="940" cy="600" r="4"/>
+    <circle cx="200" cy="460" r="3"/><circle cx="160" cy="620" r="5"/><circle cx="1080" cy="900" r="3"/>
+    <circle cx="610" cy="300" r="4"/>
+  </g>
+
+  <!-- Grano de película -->
+  <rect width="1200" height="1500" filter="url(#grano)"/>
+</svg>

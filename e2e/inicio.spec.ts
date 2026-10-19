@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { openMainNav } from "./helpers/nav";
 
 test.describe("Página de inicio", () => {
   test("muestra el nombre del negocio y el título principal", async ({ page }) => {
@@ -7,6 +8,61 @@ test.describe("Página de inicio", () => {
     await expect(page).toHaveTitle(/Estudio de Prueba/);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("lang", "es");
+  });
+
+  test("el hero muestra el título de la marca y sus dos acciones", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Tu belleza, elevada");
+    const main = page.getByRole("main");
+    await expect(main.getByRole("link", { name: "Agendar cita" })).toHaveAttribute(
+      "href",
+      "/agendar",
+    );
+    await expect(main.getByRole("link", { name: "Ver portafolio" })).toHaveAttribute(
+      "href",
+      "/portafolio",
+    );
+    // La imagen del hero carga de inmediato (es lo primero que se ve).
+    const hero = main.getByRole("img", { name: /Bodegón de maquillaje/ });
+    await expect(hero).toHaveAttribute("loading", "eager");
+    await expect
+      .poll(() => hero.evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .toBeGreaterThan(0);
+  });
+
+  test("el encabezado tiene logo, menú, ingresar y carrito", async ({ page }) => {
+    await page.goto("/");
+    const banner = page.getByRole("banner");
+    await expect(banner.getByRole("link", { name: "Estudio de Prueba" })).toBeVisible();
+    await expect(banner.getByRole("link", { name: "Ingresar" })).toBeVisible();
+    await expect(banner.getByTestId("cart-link")).toBeVisible();
+    const nav = await openMainNav(page);
+    for (const name of ["Agendar", "Tienda", "Portafolio"]) {
+      await expect(nav.getByRole("link", { name })).toBeVisible();
+    }
+  });
+
+  test("el menú del celular se abre, se cierra con Escape y marca la página actual", async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, "El botón de menú solo existe en el celular");
+    await page.goto("/tienda");
+    const button = page.getByRole("button", { name: "Menú" });
+    await expect(button).toHaveAttribute("aria-expanded", "false");
+    await button.click();
+    await expect(button).toHaveAttribute("aria-expanded", "true");
+    const nav = page.getByRole("navigation", { name: "Principal" });
+    await expect(nav.getByRole("link", { name: "Tienda" })).toHaveAttribute("aria-current", "page");
+    await page.keyboard.press("Escape");
+    await expect(button).toHaveAttribute("aria-expanded", "false");
+    await expect(button).toBeFocused();
+    await expect(nav).toBeHidden();
+
+    await button.click();
+    await nav.getByRole("link", { name: "Portafolio" }).click();
+    await expect(page).toHaveURL(/\/portafolio$/);
+    await expect(nav).toBeHidden();
   });
 
   test("envía los encabezados de seguridad", async ({ page }) => {

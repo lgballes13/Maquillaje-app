@@ -60,7 +60,7 @@ export function parsePublicEnv(source: Record<string, string | undefined>): Publ
 // por eso las listamos una por una en lugar de pasar process.env completo.
 export const publicEnv = parsePublicEnv({
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-  NEXT_PUBLIC_BUSINESS_NAME: process.env.NEXT_PUBLIC_BUSINESS_NAME ?? "Estudio de Maquillaje",
+  NEXT_PUBLIC_BUSINESS_NAME: process.env.NEXT_PUBLIC_BUSINESS_NAME ?? "ROYMAKEUP",
   NEXT_PUBLIC_WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
   NEXT_PUBLIC_CONTACT_EMAIL: process.env.NEXT_PUBLIC_CONTACT_EMAIL,
   NEXT_PUBLIC_BUSINESS_LEGAL_ID: process.env.NEXT_PUBLIC_BUSINESS_LEGAL_ID,
