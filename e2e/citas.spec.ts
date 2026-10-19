@@ -38,7 +38,10 @@ test.describe("Agendar una cita", () => {
     const user = await createTestUser({ name: "Clienta Agenda" });
 
     await page.goto("/");
-    await page.getByRole("link", { name: "Agendar ahora" }).click();
+    await page
+      .getByRole("region", { name: "Tu belleza, elevada" })
+      .getByRole("link", { name: "Agendar cita" })
+      .click();
     await expect(page.getByRole("heading", { name: "Elige tu servicio" })).toBeVisible();
     await expectNoA11yViolations(page);
 

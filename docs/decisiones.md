@@ -519,6 +519,10 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   texto dorado sobre marfil se usa `--gold-foreground`.
 - Tipografías con `next/font` (se sirven desde nuestro dominio): Cormorant Garamond para `h1`–`h3`
   y el logo, Manrope para el resto. Los títulos toman la serif por defecto desde la capa base.
+  Cormorant es variable (un archivo por estilo) y no se precarga: con 6 archivos precargados
+  Lighthouse bajó /tienda a 88 en la CI porque competían con Manrope, que pinta el texto principal.
+- Botones en forma de píldora en toda la app (`button.tsx`) y encabezados de sección con
+  `SectionHeading` (antetítulo dorado, título serif, línea de contexto).
 - El nombre del logo sale de `NEXT_PUBLIC_BUSINESS_NAME` (valor por defecto: ROYMAKEUP). En
   Vercel hay que poner ese valor para que se vea en el sitio publicado.
 - Encabezado fijo arriba. En el celular el menú va detrás de un botón «Menú» (aria-expanded,

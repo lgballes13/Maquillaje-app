@@ -13,21 +13,47 @@ test.describe("Página de inicio", () => {
   test("el hero muestra el título de la marca y sus dos acciones", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Tu belleza, elevada");
-    const main = page.getByRole("main");
-    await expect(main.getByRole("link", { name: "Agendar cita" })).toHaveAttribute(
+    const hero = page.getByRole("region", { name: "Tu belleza, elevada" });
+    await expect(hero.getByRole("link", { name: "Agendar cita" })).toHaveAttribute(
       "href",
       "/agendar",
     );
-    await expect(main.getByRole("link", { name: "Ver portafolio" })).toHaveAttribute(
+    await expect(hero.getByRole("link", { name: "Ver portafolio" })).toHaveAttribute(
       "href",
       "/portafolio",
     );
     // La imagen del hero carga de inmediato (es lo primero que se ve).
-    const hero = main.getByRole("img", { name: /Bodegón de maquillaje/ });
-    await expect(hero).toHaveAttribute("loading", "eager");
+    const heroImage = hero.getByRole("img", { name: /Bodegón de maquillaje/ });
+    await expect(heroImage).toHaveAttribute("loading", "eager");
     await expect
-      .poll(() => hero.evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .poll(() => heroImage.evaluate((img: HTMLImageElement) => img.naturalWidth))
       .toBeGreaterThan(0);
+  });
+
+  test("los servicios y los módulos destacados llevan a su sección", async ({ page }) => {
+    await page.goto("/");
+    const services = page.getByRole("region", { name: "Un look para cada momento" });
+    for (const name of ["Maquillaje social", "Maquillaje de novia", "Asesoría personalizada"]) {
+      await expect(services.getByRole("heading", { name, level: 3 })).toBeVisible();
+      await expect(
+        services.getByRole("link", { name: `Agendar ${name.toLowerCase()}` }),
+      ).toHaveAttribute("href", "/agendar");
+    }
+    const modules = page.getByRole("region", { name: /Agenda, compra y déjate inspirar/ });
+    for (const [name, href] of [
+      ["Ver horarios disponibles", "/agendar"],
+      ["Ir a la tienda", "/tienda"],
+      ["Ver portafolio", "/portafolio"],
+    ] as const) {
+      await expect(modules.getByRole("link", { name })).toHaveAttribute("href", href);
+    }
+    // Las ilustraciones cargan (no quedan cuadros vacíos).
+    for (const img of await page.getByRole("main").getByRole("img").all()) {
+      await img.scrollIntoViewIfNeeded();
+      await expect
+        .poll(() => img.evaluate((el: HTMLImageElement) => el.naturalWidth))
+        .toBeGreaterThan(0);
+    }
   });
 
   test("el encabezado tiene logo, menú, ingresar y carrito", async ({ page }) => {

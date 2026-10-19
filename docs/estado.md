@@ -4,7 +4,7 @@
 > una conversación nueva: léelo primero.
 
 **Última actualización:** 2026-10-19
-**Fase actual:** Rediseño visual ROYMAKEUP, etapa 1 de 4 (Hero + navegación) terminada en la rama
+**Fase actual:** Rediseño visual ROYMAKEUP, etapas 1 y 2 de 4 terminadas en la rama
 `claude/rediseno-roymakeup-sh1sw1`. Las 9 fases del plan original están terminadas.
 
 ## Rediseño visual ROYMAKEUP
@@ -12,7 +12,7 @@
 | Etapa | Contenido                                                                     | Estado       |
 | ----- | ----------------------------------------------------------------------------- | ------------ |
 | 1     | Paleta, tipografías, encabezado con menú móvil, hero y metadata SEO           | ✅ Terminada |
-| 2     | Tarjetas de servicios y módulos destacados (Agendamiento, Tienda, Portafolio) | ⏳ Pendiente |
+| 2     | Tarjetas de servicios y módulos destacados (Agendamiento, Tienda, Portafolio) | ✅ Terminada |
 | 3     | Galería con filtros, testimonios, CTA final y footer completo                 | ⏳ Pendiente |
 | 4     | Panel administrativo con sidebar, métricas, citas, stock y actividad          | ⏳ Pendiente |
 

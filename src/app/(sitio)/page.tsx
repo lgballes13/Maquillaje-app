@@ -1,35 +1,76 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { ArrowRight, CalendarHeart, ShoppingBag, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { FillImage } from "@/components/fill-image";
 import { buttonVariants } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
+import { SectionHeading } from "@/components/section-heading";
 import heroImage from "../../../public/images/hero-editorial.webp";
+import moduloAgenda from "../../../public/images/modulo-agenda.webp";
+import moduloPortafolio from "../../../public/images/modulo-portafolio.webp";
+import moduloTienda from "../../../public/images/modulo-tienda.webp";
+import servicioAsesoria from "../../../public/images/servicio-asesoria.webp";
+import servicioNovia from "../../../public/images/servicio-novia.webp";
+import servicioSocial from "../../../public/images/servicio-social.webp";
 
-// Secciones principales del sitio.
-const sections = [
+// Servicios que se pueden agendar. Las fotos se cambian reemplazando el archivo en public/images.
+const SERVICES = [
   {
-    title: "Agenda tu cita",
-    description: "Maquillaje social, de novia y asesorías. Elige día y hora en 3 pasos.",
-    icon: CalendarHeart,
+    title: "Maquillaje social",
+    description:
+      "Para grados, cenas, fiestas y sesiones de fotos. Un acabado luminoso y duradero que resalta tus rasgos.",
+    image: servicioSocial,
+    alt: "Paleta de sombras en tonos vino, dorado y nude junto a unos aretes",
+  },
+  {
+    title: "Maquillaje de novia",
+    description:
+      "Un look pensado para tu vestido, tu peinado y tus fotos, con un acabado que dura de la ceremonia a la fiesta.",
+    image: servicioNovia,
+    alt: "Flores blancas, un collar de perlas y un perfume sobre seda marfil",
+  },
+  {
+    title: "Asesoría personalizada",
+    description:
+      "Aprende a elegir tus productos y a maquillarte según tu tipo de piel, tus rasgos y tu estilo.",
+    image: servicioAsesoria,
+    alt: "Espejo dorado, brochas en un vaso y una libreta de apuntes",
+  },
+] as const;
+
+// Módulos de la app destacados en el inicio.
+const MODULES = [
+  {
+    eyebrow: "Agenda en línea",
+    title: "Reserva tu cita en minutos",
+    description:
+      "Elige el servicio, el día y la hora que mejor te queden. Recibes la confirmación por correo y puedes reprogramar desde tu cuenta.",
     href: "/agendar",
-    cta: "Agendar ahora",
+    cta: "Ver horarios disponibles",
+    image: moduloAgenda,
+    alt: "Calendario con un día marcado en borgoña junto a un labial",
   },
   {
-    title: "Tienda",
-    description: "Productos con stock en tiempo real y preventa de los agotados.",
-    icon: ShoppingBag,
+    eyebrow: "Tienda",
+    title: "Los productos que usamos en el estudio",
+    description:
+      "Compra con el stock al día y reserva en preventa lo que esté agotado. Recoge en el estudio o recibe en casa.",
     href: "/tienda",
-    cta: "Ver la tienda",
+    cta: "Ir a la tienda",
+    image: moduloTienda,
+    alt: "Repisa dorada con frascos de base, crema, labiales y una bolsa de compras",
   },
   {
-    title: "Portafolio",
-    description: "Mira nuestros trabajos y agenda el estilo que más te guste.",
-    icon: Sparkles,
+    eyebrow: "Portafolio",
+    title: "Inspírate con trabajos reales",
+    description:
+      "Looks de novias, eventos y sesiones, con fotos de antes y después autorizadas por cada clienta.",
     href: "/portafolio",
-    cta: "Ver trabajos",
+    cta: "Ver portafolio",
+    image: moduloPortafolio,
+    alt: "Marcos dorados en arco con retratos de perfil dibujados en línea",
   },
 ] as const;
 
@@ -74,26 +115,117 @@ export default async function HomePage() {
       />
       <Hero />
 
-      <div className="mx-auto w-full max-w-5xl px-4 py-10">
-        <section aria-labelledby="titulo-secciones">
-          <h2 id="titulo-secciones" className="sr-only">
-            Secciones del sitio
-          </h2>
-          <ul className="grid gap-4 sm:grid-cols-3">
-            {sections.map(({ title, description, icon: Icon, href, cta }) => (
-              <li key={title} className="rounded-xl border border-border bg-card p-5 shadow-xs">
-                <Icon aria-hidden="true" className="mb-3 size-8 text-primary" />
-                <h3 className="text-lg font-semibold">{title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-                <Link href={href} className={buttonVariants({ className: "mt-3" })}>
-                  {cta}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
+      <Services />
+      <Modules />
     </main>
+  );
+}
+
+/** Tres tarjetas con los servicios principales; cada una lleva a la agenda. */
+function Services() {
+  return (
+    <section aria-labelledby="titulo-servicios" className="px-4 py-20 sm:py-24">
+      <SectionHeading
+        id="titulo-servicios"
+        eyebrow="Servicios"
+        title="Un look para cada momento"
+        description="Trabajamos con productos profesionales y una piel bien preparada para que tu maquillaje luzca natural en persona y en cámara."
+      />
+      <ul className="mx-auto mt-14 grid max-w-6xl gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        {SERVICES.map((service) => (
+          <li
+            key={service.title}
+            className="group flex flex-col rounded-[2rem] border border-gold/30 bg-card p-3 shadow-sm shadow-plum/5 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-plum/10"
+          >
+            <div className="relative aspect-[4/5] overflow-hidden rounded-t-full rounded-b-[1.5rem] bg-secondary">
+              <FillImage
+                src={service.image}
+                alt={service.alt}
+                sizes="(min-width: 1152px) 360px, (min-width: 640px) 45vw, 92vw"
+                className="object-cover transition duration-500 group-hover:scale-[1.03]"
+              />
+            </div>
+            <div className="flex flex-1 flex-col px-3 pt-6 pb-3">
+              <h3 className="text-3xl text-plum">{service.title}</h3>
+              <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
+                {service.description}
+              </p>
+              <Link
+                href="/agendar"
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "mt-6 self-start border-primary/40 text-primary",
+                )}
+              >
+                Agendar<span className="sr-only"> {service.title.toLowerCase()}</span>
+                <ArrowRight aria-hidden="true" />
+              </Link>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Agenda, tienda y portafolio en bloques alternados de imagen y texto. */
+function Modules() {
+  return (
+    <section
+      aria-labelledby="titulo-modulos"
+      className="bg-[linear-gradient(180deg,var(--color-muted)_0%,var(--color-secondary)_100%)] px-4 py-20 sm:py-24"
+    >
+      <SectionHeading
+        id="titulo-modulos"
+        eyebrow="Todo en un solo lugar"
+        title={
+          <>
+            Agenda, compra y <em className="text-primary">déjate inspirar</em>
+          </>
+        }
+      />
+      <div className="mx-auto mt-14 flex max-w-6xl flex-col gap-16 md:gap-24">
+        {MODULES.map((module, index) => (
+          <article
+            key={module.href}
+            aria-labelledby={`modulo-${index}`}
+            className="grid items-center gap-8 md:grid-cols-2 md:gap-14"
+          >
+            <div
+              className={cn(
+                "relative aspect-[4/3] overflow-hidden rounded-[2rem] border border-gold/40 bg-card shadow-xl shadow-plum/10",
+                index % 2 === 1 && "md:order-last",
+              )}
+            >
+              <FillImage
+                src={module.image}
+                alt={module.alt}
+                sizes="(min-width: 1152px) 550px, (min-width: 768px) 46vw, 92vw"
+                className="object-cover"
+              />
+            </div>
+            <div>
+              <p className="text-xs font-semibold tracking-[0.25em] text-gold-foreground uppercase">
+                <span aria-hidden="true" className="mr-2 font-serif text-base tracking-normal">
+                  0{index + 1}
+                </span>
+                {module.eyebrow}
+              </p>
+              <h3 id={`modulo-${index}`} className="mt-3 text-4xl leading-tight text-plum">
+                {module.title}
+              </h3>
+              <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground">
+                {module.description}
+              </p>
+              <Link href={module.href} className={cn(buttonVariants({ size: "lg" }), "mt-8")}>
+                {module.cta}
+                <ArrowRight aria-hidden="true" />
+              </Link>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -125,10 +257,7 @@ function Hero() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/agendar"
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "rounded-full px-8 shadow-md shadow-primary/20",
-              )}
+              className={cn(buttonVariants({ size: "lg" }), "shadow-md shadow-primary/20")}
             >
               Agendar cita
               <ArrowRight aria-hidden="true" />
@@ -137,7 +266,7 @@ function Hero() {
               href="/portafolio"
               className={cn(
                 buttonVariants({ size: "lg", variant: "outline" }),
-                "rounded-full border-primary/40 bg-transparent px-8 text-primary",
+                "border-primary/40 bg-transparent text-primary",
               )}
             >
               Ver portafolio
