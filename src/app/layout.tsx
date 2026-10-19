@@ -13,13 +13,15 @@ const manrope = Manrope({
   display: "swap",
 });
 
-// Serif editorial solo para títulos (h1, h2, h3 y el logo).
+// Serif editorial solo para títulos (h1, h2, h3 y el logo). Es variable (un archivo
+// por estilo) y no se precarga: así no compite con el texto y las imágenes por la
+// conexión del celular; mientras llega se ve una serif del sistema de medidas similares.
 const cormorant = Cormorant_Garamond({
   variable: "--font-serif-family",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
   style: ["normal", "italic"],
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
