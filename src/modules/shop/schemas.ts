@@ -1,12 +1,12 @@
 import { z } from "zod";
+import { MAX_CART_LINES, MAX_UNITS_PER_PRODUCT } from "./limits";
 
 /*
  * Validaciones de la tienda. Los límites son los mismos de la base de datos
  * (CHECK y create_order): el formulario avisa antes de llegar a ella.
  */
 
-export const MAX_UNITS_PER_PRODUCT = 10;
-export const MAX_CART_LINES = 20;
+export { MAX_CART_LINES, MAX_UNITS_PER_PRODUCT };
 
 export const cartItemSchema = z.object({
   productId: z.uuid(),

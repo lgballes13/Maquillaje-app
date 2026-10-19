@@ -1,9 +1,10 @@
 import * as Sentry from "@sentry/nextjs";
-import { z } from "zod";
+import { config as zodConfig } from "zod/v4/core";
 
 // Zod prueba si puede usar `new Function` para validar más rápido; la CSP lo
 // bloquea (bien hecho) y el navegador lo reporta como problema. Se lo apagamos.
-z.config({ jitless: true });
+// Solo el núcleo de Zod: importar "zod" entero sumaba 31 KB a cada página.
+zodConfig({ jitless: true });
 
 // Se ejecuta en el navegador antes de que la app arranque.
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;

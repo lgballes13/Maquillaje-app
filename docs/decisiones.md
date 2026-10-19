@@ -489,7 +489,10 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   CSP y con `<` escapado.
 - Zod v4 prueba `new Function("")` para compilar validaciones más rápido; la CSP lo bloquea y
   Lighthouse lo cuenta como error de consola. `z.config({ jitless: true })` en
-  `instrumentation-client.ts` lo evita sin cambiar la CSP.
+  `instrumentation-client.ts` lo evita sin cambiar la CSP. Ahí se importa solo `zod/v4/core`, y
+  el carrito del navegador (`parseCart`, en todas las páginas por el contador) valida sin Zod con
+  los mismos criterios de `cartSchema` (una prueba lo compara). Así ninguna página pública carga
+  los 31 KB de Zod, y el inicio gana margen en Lighthouse.
 - `next/image` con `fill` escribe un atributo `style` que la CSP bloquea (las fotos de la tienda
   y del portafolio perdían su posición y la consola mostraba errores). `FillImage`
   (`src/components/fill-image.tsx`) usa `getImageProps` y da la misma posición con clases.

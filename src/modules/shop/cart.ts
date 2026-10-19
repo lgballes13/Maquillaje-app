@@ -1,4 +1,5 @@
-import { cartSchema, MAX_CART_LINES, MAX_UNITS_PER_PRODUCT, type CartItem } from "./schemas";
+import { MAX_CART_LINES, MAX_UNITS_PER_PRODUCT } from "./limits";
+import type { CartItem } from "./schemas";
 
 /*
  * Carrito guardado en el navegador (localStorage). Solo guarda QUÉ productos y
@@ -10,15 +11,42 @@ import { cartSchema, MAX_CART_LINES, MAX_UNITS_PER_PRODUCT, type CartItem } from
 export const CART_STORAGE_KEY = "tienda:carrito:v1";
 export const CART_EVENT = "cart-change";
 
-/** Lee el carrito desde un texto guardado; si no es válido, carrito vacío. */
+// La misma expresión que usa `z.uuid()` (cartSchema), copiada para no cargar Zod en cada página.
+const UUID =
+  /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/;
+
+/**
+ * Lee el carrito desde un texto guardado; si no es válido, carrito vacío.
+ * Acepta lo mismo que `cartSchema` (lo comprueba cart.test.ts), sin Zod: el
+ * contador del carrito está en todas las páginas y Zod pesa 31 KB. Al comprar,
+ * el servidor vuelve a validar con `cartSchema`.
+ */
 export function parseCart(raw: string | null): CartItem[] {
   if (!raw) return [];
+  let data: unknown;
   try {
-    const parsed = cartSchema.safeParse(JSON.parse(raw));
-    return parsed.success ? parsed.data : [];
+    data = JSON.parse(raw);
   } catch {
     return [];
   }
+  if (!Array.isArray(data) || data.length > MAX_CART_LINES) return [];
+  const items: CartItem[] = [];
+  for (const entry of data as unknown[]) {
+    if (typeof entry !== "object" || entry === null) return [];
+    const { productId, quantity } = entry as Record<string, unknown>;
+    if (typeof productId !== "string" || !UUID.test(productId)) return [];
+    if (
+      typeof quantity !== "number" ||
+      !Number.isInteger(quantity) ||
+      quantity < 1 ||
+      quantity > MAX_UNITS_PER_PRODUCT
+    ) {
+      return [];
+    }
+    items.push({ productId, quantity });
+  }
+  if (new Set(items.map((item) => item.productId)).size !== items.length) return [];
+  return items;
 }
 
 /** Suma unidades de un producto (máximo 10 por producto y 20 productos). */
