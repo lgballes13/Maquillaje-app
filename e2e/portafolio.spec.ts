@@ -82,7 +82,7 @@ test.describe("Portafolio", () => {
       .getAttribute("value");
     await consentSelect.selectOption(consentValue!);
     await form.getByLabel("Título").fill(title);
-    await form.getByLabel("Categoría").selectOption({ label: "Novia" });
+    await form.getByLabel("Categoría").selectOption({ label: "Novias" });
     await form.getByLabel("Servicio para «Agendar este estilo»").selectOption({ index: 1 });
     await form.getByRole("button", { name: "Crear trabajo" }).click();
     await expect(form.getByTestId("form-message")).toContainText(`Trabajo «${title}» creado`);

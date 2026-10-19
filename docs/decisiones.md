@@ -519,8 +519,8 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   texto dorado sobre marfil se usa `--gold-foreground`.
 - Tipografías con `next/font` (se sirven desde nuestro dominio): Cormorant Garamond para `h1`–`h3`
   y el logo, Manrope para el resto. Los títulos toman la serif por defecto desde la capa base.
-  Cormorant es variable y se precarga; su itálica (solo para `<em>` en títulos) va aparte y sin
-  precarga. Con 6 archivos precargados la tienda bajó a 88 en Lighthouse; sin precargar nada,
+  Cormorant es variable y se precarga; su itálica (solo para `<em>` en títulos) va aparte, sin
+  precarga y en un solo peso (500, 24 KB en vez de 40 KB del archivo variable). Con 6 archivos precargados la tienda bajó a 88 en Lighthouse; sin precargar nada,
   la primera pintura del inicio subía de 0.8 a 1.4 s.
 - Las ilustraciones se sirven sin el optimizador de imágenes (`unoptimized`): pesan de 9 a 22 KB y
   el optimizador tardaba en la primera visita. El hero se exporta a 800×1000 (12 KB).
@@ -535,3 +535,14 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   generar fotos realistas. Se dibujan ilustraciones editoriales propias en SVG
   (`design/ilustraciones/`) y se exportan a WebP en `public/images/`. Para usar una foto real,
   se reemplaza el archivo WebP con el mismo nombre (proporción 4:5 en el hero).
+- Las viñetas decorativas son formas de CSS (un rombo dorado), no caracteres como «✦»: esos
+  caracteres no existen en nuestras fuentes y el navegador buscaba una de reserva, lo que
+  duplicaba el tiempo del primer dibujo del inicio en celular.
+- Galería del inicio (etapa 3): muestra los trabajos publicados del portafolio (hasta 6 por
+  filtro) y filtra en el navegador, sin recargar, con botones `aria-pressed`. Los filtros son las
+  categorías activas del panel. Se carga dentro de un `Suspense` para que el resto del inicio no
+  espere la consulta. Sin trabajos publicados muestra un estado vacío con botón a agendar.
+- Testimonios: archivo `src/config/testimonials.ts`; mientras `sample` sea `true` la tarjeta dice
+  «Ejemplo», para no presentar textos inventados como reseñas reales.
+- Pie de página: redes sociales opcionales por variables `NEXT_PUBLIC_*_URL` (solo `https`); cada
+  red y cada dato de contacto aparece solo si está configurado.

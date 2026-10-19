@@ -47,7 +47,7 @@ test.describe("Registro", () => {
     await expect(page).toHaveURL(/\/cuenta$/);
     await expect(page.getByRole("heading", { name: "Hola, Ana Pérez" })).toBeVisible();
     await expect(page.getByText("+573001234567")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Mi cuenta" })).toBeVisible();
+    await expect(page.getByRole("banner").getByRole("link", { name: "Mi cuenta" })).toBeVisible();
   });
 });
 

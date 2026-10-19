@@ -25,5 +25,11 @@ export const siteConfig = {
   contactEmail: publicEnv.NEXT_PUBLIC_CONTACT_EMAIL,
   legalId: publicEnv.NEXT_PUBLIC_BUSINESS_LEGAL_ID,
   address: publicEnv.NEXT_PUBLIC_BUSINESS_ADDRESS,
+  // Redes sociales del pie de página; las que no tengan enlace no se muestran.
+  social: {
+    instagram: publicEnv.NEXT_PUBLIC_INSTAGRAM_URL,
+    tiktok: publicEnv.NEXT_PUBLIC_TIKTOK_URL,
+    facebook: publicEnv.NEXT_PUBLIC_FACEBOOK_URL,
+  },
   whatsappMessage: "Hola, tengo una pregunta sobre sus servicios de maquillaje.",
 } as const;

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { openMainNav } from "./helpers/nav";
+import { createPortfolioCategory, createPublishedWork } from "./helpers/supabase";
 
 test.describe("Página de inicio", () => {
   test("muestra el nombre del negocio y el título principal", async ({ page }) => {
@@ -91,6 +92,84 @@ test.describe("Página de inicio", () => {
     await expect(nav).toBeHidden();
   });
 
+  test("la galería filtra los trabajos publicados sin recargar la página", async ({ page }) => {
+    const suffix = Math.random().toString(36).slice(2, 7);
+    const withWork = await createPortfolioCategory("Galería");
+    const empty = await createPortfolioCategory("Vacía");
+    const title = `Look de galería ${suffix}`;
+    await createPublishedWork({ categoryId: withWork.id, title });
+
+    await page.goto("/");
+    const gallery = page.getByRole("region", { name: "Trabajos reales" });
+    const filters = gallery.getByRole("group", { name: "Filtrar trabajos por categoría" });
+    await expect(filters.getByRole("button", { name: "Todos" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    const works = gallery.getByRole("list", { name: "Trabajos destacados" });
+    await expect(works.getByRole("link", { name: new RegExp(title) })).toBeVisible();
+
+    await filters.getByRole("button", { name: withWork.name }).click();
+    await expect(filters.getByRole("button", { name: withWork.name })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(works.getByRole("listitem")).toHaveCount(1);
+    await expect(gallery.getByRole("status")).toHaveText(`1 trabajo de ${withWork.name}`);
+
+    await filters.getByRole("button", { name: empty.name }).click();
+    await expect(gallery.getByTestId("gallery-empty-category")).toContainText(empty.name);
+
+    await filters.getByRole("button", { name: "Todos" }).click();
+    await works.getByRole("link", { name: new RegExp(title) }).click();
+    await expect(page).toHaveURL(/\/portafolio\/[0-9a-f-]+$/);
+    await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible();
+  });
+
+  test("los testimonios de ejemplo se marcan como ejemplo", async ({ page }) => {
+    await page.goto("/");
+    const testimonials = page.getByRole("region", { name: "Lo que dicen nuestras clientas" });
+    await expect(testimonials.getByRole("listitem")).toHaveCount(3);
+    await expect(testimonials.getByText("Ejemplo", { exact: true })).toHaveCount(3);
+  });
+
+  test("la franja final lleva a agendar y a WhatsApp", async ({ page }) => {
+    await page.goto("/");
+    const cta = page.getByRole("region", { name: /Reserva tu cita/ });
+    await expect(cta.getByRole("link", { name: "Agendar cita" })).toHaveAttribute(
+      "href",
+      "/agendar",
+    );
+    const whatsapp = cta.getByRole("link", { name: /Escribir por WhatsApp/ });
+    await expect(whatsapp).toHaveAttribute("href", /^https:\/\/wa\.me\/573001234567/);
+    await expect(whatsapp).toHaveAttribute("target", "_blank");
+  });
+
+  test("el pie de página tiene secciones, contacto y textos legales", async ({ page }) => {
+    await page.goto("/");
+    const footer = page.getByRole("contentinfo");
+    const explore = footer.getByRole("navigation", { name: "Explora" });
+    for (const [name, href] of [
+      ["Agendar cita", "/agendar"],
+      ["Tienda", "/tienda"],
+      ["Portafolio", "/portafolio"],
+      ["Mi cuenta", "/cuenta"],
+    ] as const) {
+      await expect(explore.getByRole("link", { name })).toHaveAttribute("href", href);
+    }
+    await expect(footer.getByRole("link", { name: /^WhatsApp/ })).toHaveAttribute(
+      "href",
+      /^https:\/\/wa\.me\//,
+    );
+    const legal = footer.getByRole("navigation", { name: "Información legal" });
+    await expect(legal.getByRole("link", { name: "Términos y condiciones" })).toBeVisible();
+    await expect(
+      legal.getByRole("link", { name: "Política de tratamiento de datos" }),
+    ).toBeVisible();
+    // Sin enlaces configurados, las redes sociales no aparecen.
+    await expect(footer.getByRole("list", { name: "Redes sociales" })).toHaveCount(0);
+  });
+
   test("envía los encabezados de seguridad", async ({ page }) => {
     const response = await page.goto("/");
     const headers = response!.headers();
@@ -138,7 +217,7 @@ test.describe("Página de inicio", () => {
 
   test("el botón de WhatsApp abre el chat en una pestaña nueva", async ({ page }) => {
     await page.goto("/");
-    const link = page.getByRole("link", { name: /whatsapp/i });
+    const link = page.getByRole("link", { name: /Escríbenos por WhatsApp/ });
     await expect(link).toBeVisible();
     await expect(link).toHaveAttribute("href", /^https:\/\/wa\.me\/573001234567/);
     await expect(link).toHaveAttribute("rel", "noopener noreferrer");

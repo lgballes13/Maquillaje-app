@@ -48,31 +48,37 @@ export async function getPortfolioCategories() {
 export interface PortfolioCard {
   id: string;
   title: string;
+  categoryId: string | null;
   categoryName: string | null;
   before: PortfolioImage | null;
   after: PortfolioImage | null;
 }
 
-export async function getPublishedWorks(categoryId: string | null): Promise<PortfolioCard[]> {
+export async function getPublishedWorks(
+  categoryId: string | null,
+  { limit = 100 }: { limit?: number } = {},
+): Promise<PortfolioCard[]> {
   const supabase = await createClient();
   let query = supabase
     .from("portfolio_works")
     .select(
-      "id, title, portfolio_categories(name, is_active), portfolio_images(kind, storage_path, alt_text, sort_order)",
+      "id, title, portfolio_categories(id, name, is_active), portfolio_images(kind, storage_path, alt_text, sort_order)",
     )
     .eq("is_published", true)
     .order("sort_order")
     .order("published_at", { ascending: false })
-    .limit(100);
+    .limit(limit);
   if (categoryId) query = query.eq("category_id", categoryId);
   const { data, error } = await query;
   if (error) throw new Error(`No se pudo cargar el portafolio: ${error.message}`);
   return data.map((work) => {
     const cover = pickCover(work.portfolio_images);
+    const category = work.portfolio_categories?.is_active ? work.portfolio_categories : null;
     return {
       id: work.id,
       title: work.title,
-      categoryName: work.portfolio_categories?.is_active ? work.portfolio_categories.name : null,
+      categoryId: category?.id ?? null,
+      categoryName: category?.name ?? null,
       before: toImage(cover.before),
       after: toImage(cover.after),
     };

@@ -7,7 +7,7 @@ import { getPortfolioCategories, getPublishedWorks } from "@/modules/portfolio/q
 
 export const metadata: Metadata = {
   title: "Portafolio",
-  description: "Trabajos de maquillaje de novia, social y editorial, con fotos de antes y después.",
+  description: "Trabajos de maquillaje de novia, social y beauty, con fotos de antes y después.",
 };
 
 const chipClass =

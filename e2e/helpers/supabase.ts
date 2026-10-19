@@ -292,3 +292,67 @@ export async function accountState(userId: string) {
     profile,
   };
 }
+
+// PNG de 1 × 1 píxel para las fotos de prueba del portafolio.
+const PNG_1PX = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  "base64",
+);
+
+/** Crea una categoría activa del portafolio con un nombre único. */
+export async function createPortfolioCategory(prefix: string) {
+  const name = `${prefix} ${randomUUID().slice(0, 5)}`;
+  const { data, error } = await adminClient()
+    .from("portfolio_categories")
+    .insert({ name, sort_order: 1000 })
+    .select("id, name")
+    .single();
+  if (error) throw error;
+  return { id: data.id as string, name: data.name as string };
+}
+
+/**
+ * Publica un trabajo con autorización y foto de «después», como lo haría la admin
+ * desde el panel. Queda primero en la galería (orden 0 y el más reciente).
+ */
+export async function createPublishedWork({
+  categoryId,
+  title,
+}: {
+  categoryId: string;
+  title: string;
+}) {
+  const supabase = adminClient();
+  const suffix = randomUUID().slice(0, 8);
+  const { data: consent, error: consentError } = await supabase
+    .from("portfolio_consents")
+    .insert({
+      client_name: `Clienta ${suffix}`,
+      signed_on: new Date().toISOString().slice(0, 10),
+      document_path: `e2e/${suffix}.pdf`,
+    })
+    .select("id")
+    .single();
+  if (consentError) throw consentError;
+  const { data: work, error: workError } = await supabase
+    .from("portfolio_works")
+    .insert({ title, category_id: categoryId, consent_id: consent.id, sort_order: 0 })
+    .select("id")
+    .single();
+  if (workError) throw workError;
+  const path = `e2e/${suffix}.png`;
+  const { error: uploadError } = await supabase.storage
+    .from("portafolio")
+    .upload(path, PNG_1PX, { contentType: "image/png" });
+  if (uploadError) throw uploadError;
+  const { error: imageError } = await supabase
+    .from("portfolio_images")
+    .insert({ work_id: work.id, kind: "after", storage_path: path, alt_text: `Foto de ${title}` });
+  if (imageError) throw imageError;
+  const { error: publishError } = await supabase
+    .from("portfolio_works")
+    .update({ is_published: true })
+    .eq("id", work.id);
+  if (publishError) throw publishError;
+  return { id: work.id as string };
+}

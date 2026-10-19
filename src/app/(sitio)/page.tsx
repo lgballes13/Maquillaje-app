@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { Suspense } from "react";
+import { ArrowRight, MessageCircle, Quote } from "lucide-react";
 import { FillImage } from "@/components/fill-image";
+import { TESTIMONIALS } from "@/config/testimonials";
+import { buildWhatsAppUrl } from "@/lib/utils";
+import { HomeGallery, type GalleryWork } from "@/modules/portfolio/components/home-gallery";
+import { getPortfolioCategories, getPublishedWorks } from "@/modules/portfolio/queries";
+import { UNOPTIMIZED_IMAGES } from "@/modules/shop/images";
 import { buttonVariants } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
@@ -117,6 +123,9 @@ export default async function HomePage() {
 
       <Services />
       <Modules />
+      <Gallery />
+      <Testimonials />
+      <FinalCta />
     </main>
   );
 }
@@ -226,6 +235,182 @@ function Modules() {
             </div>
           </article>
         ))}
+      </div>
+    </section>
+  );
+}
+
+/** Galería editorial con los trabajos publicados del portafolio. */
+function Gallery() {
+  return (
+    <section aria-labelledby="titulo-galeria" className="px-4 py-20 sm:py-24">
+      <SectionHeading
+        id="titulo-galeria"
+        eyebrow="Galería"
+        title={
+          <>
+            Trabajos <em className="text-primary">reales</em>
+          </>
+        }
+        description="Novias, eventos y sesiones beauty. Cada foto se publica con la autorización firmada de la clienta."
+      />
+      <div className="mx-auto max-w-6xl">
+        {/* La galería consulta la base de datos: el resto del inicio se muestra sin esperarla. */}
+        <Suspense
+          fallback={
+            <div
+              aria-hidden="true"
+              className="mt-10 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3"
+            >
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="aspect-[4/5] animate-pulse rounded-2xl bg-secondary" />
+              ))}
+            </div>
+          }
+        >
+          <GalleryWorks />
+        </Suspense>
+        <p className="mt-10 text-center">
+          <Link
+            href="/portafolio"
+            className={cn(buttonVariants({ size: "lg", variant: "outline" }), "border-primary/40")}
+          >
+            Ver todo el portafolio
+            <ArrowRight aria-hidden="true" />
+          </Link>
+        </p>
+      </div>
+    </section>
+  );
+}
+
+async function GalleryWorks() {
+  const [categories, works] = await Promise.all([
+    getPortfolioCategories(),
+    getPublishedWorks(null, { limit: 24 }),
+  ]);
+  const withImage: GalleryWork[] = works.flatMap((work) => {
+    const cover = work.after ?? work.before;
+    return cover
+      ? [
+          {
+            id: work.id,
+            title: work.title,
+            categoryId: work.categoryId,
+            categoryName: work.categoryName,
+            image: { url: cover.url, alt: cover.alt },
+          },
+        ]
+      : [];
+  });
+
+  if (withImage.length === 0) {
+    return (
+      <div
+        data-testid="gallery-empty"
+        className="mx-auto mt-10 max-w-xl rounded-[2rem] border border-gold/40 bg-card px-6 py-12 text-center shadow-lg shadow-plum/5"
+      >
+        <span aria-hidden="true" className="mx-auto block size-2 rotate-45 bg-gold" />
+        <p className="mt-5 font-serif text-3xl text-plum">Muy pronto, nuestros trabajos</p>
+        <p className="mt-3 text-muted-foreground">
+          Estamos preparando la galería con fotos autorizadas por nuestras clientas. Mientras tanto,
+          reserva tu cita y sé parte de ella.
+        </p>
+        <Link href="/agendar" className={cn(buttonVariants(), "mt-6")}>
+          Agendar cita
+        </Link>
+      </div>
+    );
+  }
+
+  return <HomeGallery categories={categories} works={withImage} unoptimized={UNOPTIMIZED_IMAGES} />;
+}
+
+/** Testimonios de clientas; los de ejemplo se marcan como tales (ver src/config/testimonials.ts). */
+function Testimonials() {
+  return (
+    <section
+      aria-labelledby="titulo-testimonios"
+      className="bg-[linear-gradient(180deg,var(--color-muted)_0%,var(--color-background)_100%)] px-4 py-20 sm:py-24"
+    >
+      <SectionHeading
+        id="titulo-testimonios"
+        eyebrow="Testimonios"
+        title={
+          <>
+            Lo que dicen <em className="text-primary">nuestras clientas</em>
+          </>
+        }
+      />
+      <ul className="mx-auto mt-14 grid max-w-6xl gap-6 md:grid-cols-3">
+        {TESTIMONIALS.map((testimonial, index) => (
+          <li key={index}>
+            <figure className="relative flex h-full flex-col rounded-[2rem] border border-gold/40 bg-card px-6 pt-10 pb-7 shadow-lg shadow-plum/5">
+              <Quote aria-hidden="true" className="absolute top-6 left-6 size-7 text-gold" />
+              {testimonial.sample ? (
+                <span className="absolute top-6 right-6 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                  Ejemplo
+                </span>
+              ) : null}
+              <blockquote className="mt-6 flex-1 font-serif text-xl leading-snug text-plum">
+                <p>{testimonial.quote}</p>
+              </blockquote>
+              <figcaption className="mt-6 border-t border-border pt-4 text-sm">
+                <span className="block font-semibold text-foreground">{testimonial.name}</span>
+                <span className="text-muted-foreground">{testimonial.occasion}</span>
+              </figcaption>
+            </figure>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Franja final: invitación a reservar, con WhatsApp si hay número configurado. */
+function FinalCta() {
+  return (
+    <section aria-labelledby="titulo-reserva" className="bg-plum px-4 py-20 text-plum-foreground">
+      <div className="mx-auto max-w-3xl text-center">
+        <p className="flex items-center justify-center gap-3 text-xs font-semibold tracking-[0.25em] text-gold uppercase">
+          <span aria-hidden="true" className="h-px w-8 bg-gold" />
+          Tu próxima cita
+          <span aria-hidden="true" className="h-px w-8 bg-gold" />
+        </p>
+        <h2 id="titulo-reserva" className="mt-4 text-4xl leading-tight sm:text-5xl">
+          Reserva tu cita y <em className="text-gold">déjate consentir</em>
+        </h2>
+        <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-plum-foreground/85 sm:text-lg">
+          Elige el servicio, el día y la hora en línea. Si tienes dudas sobre tu look, escríbenos
+          antes de agendar.
+        </p>
+        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link
+            href="/agendar"
+            className={cn(
+              buttonVariants({ size: "lg" }),
+              "bg-gold text-plum hover:bg-gold/90 focus-visible:ring-gold/50",
+            )}
+          >
+            Agendar cita
+            <ArrowRight aria-hidden="true" />
+          </Link>
+          {siteConfig.whatsappNumber ? (
+            <a
+              href={buildWhatsAppUrl(siteConfig.whatsappNumber, siteConfig.whatsappMessage)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                buttonVariants({ size: "lg", variant: "outline" }),
+                "border-plum-foreground/40 bg-transparent text-plum-foreground hover:bg-plum-foreground/10 hover:text-plum-foreground",
+              )}
+            >
+              <MessageCircle aria-hidden="true" />
+              Escribir por WhatsApp
+              <span className="sr-only"> (se abre en una pestaña nueva)</span>
+            </a>
+          ) : null}
+        </div>
       </div>
     </section>
   );
