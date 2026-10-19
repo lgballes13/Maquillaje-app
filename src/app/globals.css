@@ -84,6 +84,9 @@
   h3 {
     @apply font-serif font-medium tracking-tight;
   }
+  :is(h1, h2, h3) em {
+    font-family: var(--font-serif-italic-family);
+  }
   /* Respeta a quien pide menos animaciones en su sistema operativo. */
   @media (prefers-reduced-motion: reduce) {
     *,

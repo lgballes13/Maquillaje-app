@@ -519,8 +519,11 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   texto dorado sobre marfil se usa `--gold-foreground`.
 - Tipografías con `next/font` (se sirven desde nuestro dominio): Cormorant Garamond para `h1`–`h3`
   y el logo, Manrope para el resto. Los títulos toman la serif por defecto desde la capa base.
-  Cormorant es variable (un archivo por estilo) y no se precarga: con 6 archivos precargados
-  Lighthouse bajó /tienda a 88 en la CI porque competían con Manrope, que pinta el texto principal.
+  Cormorant es variable y se precarga; su itálica (solo para `<em>` en títulos) va aparte y sin
+  precarga. Con 6 archivos precargados la tienda bajó a 88 en Lighthouse; sin precargar nada,
+  la primera pintura del inicio subía de 0.8 a 1.4 s.
+- Las ilustraciones se sirven sin el optimizador de imágenes (`unoptimized`): pesan de 9 a 22 KB y
+  el optimizador tardaba en la primera visita. El hero se exporta a 800×1000 (12 KB).
 - Botones en forma de píldora en toda la app (`button.tsx`) y encabezados de sección con
   `SectionHeading` (antetítulo dorado, título serif, línea de contexto).
 - El nombre del logo sale de `NEXT_PUBLIC_BUSINESS_NAME` (valor por defecto: ROYMAKEUP). En

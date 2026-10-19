@@ -14,12 +14,18 @@ const manrope = Manrope({
 });
 
 // Serif editorial solo para títulos (h1, h2, h3 y el logo). Es variable (un archivo
-// por estilo) y no se precarga: así no compite con el texto y las imágenes por la
-// conexión del celular; mientras llega se ve una serif del sistema de medidas similares.
+// para todos los pesos) y se precarga para que la primera pintura no espere.
 const cormorant = Cormorant_Garamond({
   variable: "--font-serif-family",
   subsets: ["latin"],
-  style: ["normal", "italic"],
+  display: "swap",
+});
+
+// La itálica solo se usa en palabras destacadas (<em>) de los títulos: no se precarga.
+const cormorantItalic = Cormorant_Garamond({
+  variable: "--font-serif-italic-family",
+  subsets: ["latin"],
+  style: "italic",
   display: "swap",
   preload: false,
 });
@@ -63,7 +69,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   await headers();
 
   return (
-    <html lang="es" className={`${manrope.variable} ${cormorant.variable}`}>
+    <html
+      lang="es"
+      className={`${manrope.variable} ${cormorant.variable} ${cormorantItalic.variable}`}
+    >
       <body className="flex min-h-dvh flex-col font-sans">
         {/* Enlace oculto para usuarios de teclado: salta directo al contenido. */}
         <a

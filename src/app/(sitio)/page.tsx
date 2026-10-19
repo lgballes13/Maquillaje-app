@@ -139,6 +139,7 @@ function Services() {
           >
             <div className="relative aspect-[4/5] overflow-hidden rounded-t-full rounded-b-[1.5rem] bg-secondary">
               <FillImage
+                unoptimized
                 src={service.image}
                 alt={service.alt}
                 sizes="(min-width: 1152px) 360px, (min-width: 640px) 45vw, 92vw"
@@ -198,6 +199,7 @@ function Modules() {
               )}
             >
               <FillImage
+                unoptimized
                 src={module.image}
                 alt={module.alt}
                 sizes="(min-width: 1152px) 550px, (min-width: 768px) 46vw, 92vw"
@@ -294,11 +296,13 @@ function Hero() {
             className="absolute -inset-3 translate-x-3 translate-y-3 rounded-t-full border border-gold/70"
           />
           <div className="relative aspect-[4/5] overflow-hidden rounded-t-full bg-secondary shadow-2xl shadow-plum/20">
+            {/* Las ilustraciones pesan menos de 30 KB: se sirven tal cual, sin pasar por el
+                optimizador de imágenes, que en la primera visita tarda en generarlas. */}
             <FillImage
+              unoptimized
               src={heroImage}
               alt="Bodegón de maquillaje: labial borgoña, polvo compacto dorado y brocha sobre seda"
               sizes="(min-width: 1152px) 480px, (min-width: 768px) 42vw, 384px"
-              preload
               loading="eager"
               fetchPriority="high"
               className="object-cover"
