@@ -16,7 +16,7 @@ export default async function AdminServicesPage() {
 
   return (
     <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
-      <h1 className="text-2xl font-bold tracking-tight">Servicios</h1>
+      <h1 className="text-4xl text-plum">Servicios</h1>
       <p className="mt-2 text-muted-foreground">
         Los servicios no se borran (las citas pasadas los usan): desmarca «Visible para agendar»
         para ocultarlos. Cambiar un precio no afecta las citas ya reservadas.

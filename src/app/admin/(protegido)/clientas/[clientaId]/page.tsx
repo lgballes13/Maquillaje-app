@@ -42,9 +42,7 @@ export default async function AdminCustomerPage({
       >
         ← Volver a clientas
       </Link>
-      <h1 className="mt-2 text-2xl font-bold tracking-tight">
-        {customer.full_name || "Clienta sin nombre"}
-      </h1>
+      <h1 className="mt-2 text-4xl text-plum">{customer.full_name || "Clienta sin nombre"}</h1>
       <p className="mt-2 break-words">
         <a
           href={`mailto:${customer.email}`}

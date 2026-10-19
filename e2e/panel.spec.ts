@@ -10,6 +10,7 @@ import {
   insertPaidOrder,
   setProfilePhone,
 } from "./helpers/supabase";
+import { openAdminNav } from "./helpers/nav";
 
 /*
  * Panel completo: agenda por día y semana, ficha de la clienta con nota
@@ -49,7 +50,7 @@ test.describe("Panel de administración", () => {
     await enrollTotp(page);
 
     // 1. Agenda del día de la cita y luego la semana.
-    await page.getByRole("link", { name: /^Agenda/ }).click();
+    await (await openAdminNav(page)).getByRole("link", { name: "Agenda" }).click();
     await expect(page.getByRole("heading", { name: "Agenda", level: 1 })).toBeVisible();
     await expectNoA11yViolations(page);
     const day = bogotaDate(appointment.startsAt);
@@ -117,7 +118,7 @@ test.describe("Panel de administración", () => {
     // 4. Reportes de hoy: el producto vendido aparece entre los más vendidos.
     const today = bogotaToday();
     await page.goto("/admin");
-    await page.getByRole("link", { name: /^Reportes/ }).click();
+    await (await openAdminNav(page)).getByRole("link", { name: "Reportes" }).click();
     await page.getByLabel("Desde").fill(today);
     await page.getByLabel("Hasta").fill(today);
     await page.getByRole("button", { name: "Ver reporte" }).click();
@@ -157,5 +158,57 @@ test.describe("Panel de administración", () => {
     const csv = await page.request.get("/admin/exportar/clientas", { maxRedirects: 0 });
     expect(csv.status()).toBe(404);
     expect(await csv.text()).not.toContain("Nombre;Correo");
+  });
+  test("el resumen muestra métricas, acciones rápidas, stock y la barra lateral", async ({
+    page,
+    isMobile,
+  }) => {
+    const suffix = Math.random().toString(36).slice(2, 7);
+    // Agotado y con nombre que va primero, para que quede en la tabla de stock.
+    const product = await createTestProduct({ name: `Aaa Resumen ${suffix}`, stock: 0 });
+    const admin = await createTestUser({ admin: true });
+    await login(page, admin.email, admin.password);
+    await enrollTotp(page);
+
+    await expect(page.getByRole("heading", { name: "Resumen", level: 1 })).toBeVisible();
+    const metrics = page.getByRole("region", { name: "Métricas" });
+    for (const label of ["Citas hoy", "Ingresos del mes", "Pedidos por entregar", "Stock bajo"]) {
+      await expect(metrics.getByRole("link", { name: new RegExp(label) })).toBeVisible();
+    }
+    const actions = page.getByRole("region", { name: "Acciones rápidas" });
+    await expect(actions.getByRole("link", { name: "Nuevo producto" })).toHaveAttribute(
+      "href",
+      "/admin/productos#titulo-nuevo",
+    );
+    const stock = page.getByRole("region", { name: "Stock de la tienda" });
+    await expect(
+      stock.getByRole("row", { name: new RegExp(`${product.name}.*Agotado`) }),
+    ).toBeVisible();
+    await expect(page.getByRole("region", { name: "Próximas citas" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Actividad reciente" })).toBeVisible();
+    await expectNoA11yViolations(page);
+
+    // Barra lateral: marca la sección actual; en el celular se abre y se cierra con Escape.
+    const nav = await openAdminNav(page);
+    await expect(nav.getByRole("link", { name: "Resumen" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    if (isMobile) {
+      const button = page.getByRole("button", { name: "Menú del panel" });
+      await expect(button).toHaveAttribute("aria-expanded", "true");
+      await page.keyboard.press("Escape");
+      await expect(button).toHaveAttribute("aria-expanded", "false");
+      await expect(button).toBeFocused();
+      await expect(nav).toBeHidden();
+      await (await openAdminNav(page)).getByRole("link", { name: "Pedidos" }).click();
+    } else {
+      await nav.getByRole("link", { name: "Pedidos" }).click();
+    }
+    await expect(page.getByRole("heading", { name: "Pedidos", level: 1 })).toBeVisible();
+    await expect((await openAdminNav(page)).getByRole("link", { name: "Pedidos" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 });

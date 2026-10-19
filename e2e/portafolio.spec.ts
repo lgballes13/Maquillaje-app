@@ -2,6 +2,7 @@ import { expect, test } from "./fixtures";
 import { enrollTotp, login } from "./helpers/auth";
 import { expectNoA11yViolations } from "./helpers/booking";
 import { createTestUser } from "./helpers/supabase";
+import { openAdminNav } from "./helpers/nav";
 
 /*
  * Portafolio: la admin registra la autorización firmada, crea el trabajo con
@@ -26,10 +27,7 @@ test.describe("Portafolio", () => {
     const admin = await createTestUser({ admin: true });
     await login(page, admin.email, admin.password);
     await enrollTotp(page);
-    await page
-      .getByRole("link", { name: /Portafolio/ })
-      .first()
-      .click();
+    await (await openAdminNav(page)).getByRole("link", { name: "Portafolio" }).click();
     await expect(page.getByRole("heading", { name: "Portafolio", level: 1 })).toBeVisible();
     await expectNoA11yViolations(page);
 

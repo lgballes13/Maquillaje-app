@@ -3,7 +3,7 @@ import { expect, test } from "./fixtures";
 import { enrollTotp, login } from "./helpers/auth";
 import { expectNoA11yViolations } from "./helpers/booking";
 import { waitForEmail } from "./helpers/mailpit";
-import { openMainNav } from "./helpers/nav";
+import { openMainNav, openAdminNav } from "./helpers/nav";
 import {
   createTestProduct,
   createTestUser,
@@ -244,7 +244,7 @@ test.describe("Panel de la tienda", () => {
     const admin = await createTestUser({ admin: true });
     await login(page, admin.email, admin.password);
     await enrollTotp(page);
-    await page.getByRole("link", { name: /Productos/ }).click();
+    await (await openAdminNav(page)).getByRole("link", { name: "Productos" }).click();
     await expect(page.getByRole("heading", { name: "Productos", level: 1 })).toBeVisible();
 
     // Crear el producto.

@@ -3,6 +3,7 @@ import { expect, test } from "./fixtures";
 import { enrollTotp, login } from "./helpers/auth";
 import { createTestUser } from "./helpers/supabase";
 import { nextFreshTotp } from "./helpers/totp";
+import { openAdminNav } from "./helpers/nav";
 
 test.describe("Acceso al panel", () => {
   test("sin sesión, /admin pide ingresar", async ({ page }) => {
@@ -30,7 +31,7 @@ test.describe("Acceso al panel", () => {
     // Primer ingreso: obliga a configurar el segundo factor.
     await login(page, admin.email, admin.password);
     const { secret, step } = await enrollTotp(page);
-    await expect(page.getByRole("heading", { name: "Panel de administración" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Resumen", level: 1 })).toBeVisible();
 
     // Cierra sesión y vuelve a entrar: ahora pide el código.
     await page.getByRole("button", { name: "Cerrar sesión" }).click();
@@ -54,7 +55,7 @@ test.describe("Reglas del negocio", () => {
     await login(page, admin.email, admin.password);
     await enrollTotp(page);
 
-    await page.getByRole("link", { name: /Reglas del negocio/ }).click();
+    await (await openAdminNav(page)).getByRole("link", { name: "Reglas del negocio" }).click();
     await expect(page.getByRole("heading", { name: "Reglas del negocio", level: 1 })).toBeVisible();
 
     // Guardar sin cambios no crea versión.

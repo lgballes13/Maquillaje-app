@@ -548,3 +548,8 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   «Ejemplo», para no presentar textos inventados como reseñas reales.
 - Pie de página: redes sociales opcionales por variables `NEXT_PUBLIC_*_URL` (solo `https`); cada
   red y cada dato de contacto aparece solo si está configurado.
+- Panel (etapa 4): barra lateral agrupada (General, Citas, Tienda, Portafolio, Configuración) en
+  `src/components/admin-sidebar.tsx`, dentro del layout protegido para que no aparezca antes del
+  2FA. En el celular va detrás de «Menú del panel» (aria-expanded, Escape). El Resumen solo lee
+  datos que ya existían (agenda, `admin_report`, pedidos, productos); no hay tablas nuevas. «Stock
+  bajo» es 3 unidades o menos (constante `LOW_STOCK`).
