@@ -21,10 +21,12 @@ const cormorant = Cormorant_Garamond({
   display: "swap",
 });
 
-// La itálica solo se usa en palabras destacadas (<em>) de los títulos: no se precarga.
+// La itálica solo se usa en palabras destacadas (<em>) de los títulos, que siempre van en
+// peso 500: un solo peso fijo pesa 24 KB en vez de 40 KB del archivo variable. No se precarga.
 const cormorantItalic = Cormorant_Garamond({
   variable: "--font-serif-italic-family",
   subsets: ["latin"],
+  weight: "500",
   style: "italic",
   display: "swap",
   preload: false,

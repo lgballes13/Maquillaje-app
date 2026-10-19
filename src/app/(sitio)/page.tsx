@@ -280,9 +280,7 @@ function Hero() {
           >
             {SPECIALTIES.map((item) => (
               <li key={item} className="flex items-center gap-2">
-                <span aria-hidden="true" className="text-gold">
-                  ✦
-                </span>
+                <span aria-hidden="true" className="size-1.5 rotate-45 bg-gold" />
                 {item}
               </li>
             ))}
