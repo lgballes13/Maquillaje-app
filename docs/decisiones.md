@@ -539,7 +539,9 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   caracteres no existen en nuestras fuentes y el navegador buscaba una de reserva, lo que
   duplicaba el tiempo del primer dibujo del inicio en celular.
 - Galería del inicio (etapa 3): muestra los trabajos publicados del portafolio (hasta 6 por
-  filtro) y filtra en el navegador, sin recargar, con botones `aria-pressed`. Los filtros son las
+  filtro). Los filtros son enlaces `?galeria=<categoría>` con `scroll={false}`: Next.js cambia los
+  trabajos sin recargar la página y sin sumar JavaScript al inicio (un componente de cliente para
+  filtrar agregaba un archivo JS y bajó el inicio a 84–88 en la CI). Los filtros son las
   categorías activas del panel. Se carga dentro de un `Suspense` para que el resto del inicio no
   espere la consulta. Sin trabajos publicados muestra un estado vacío con botón a agendar.
 - Testimonios: archivo `src/config/testimonials.ts`; mientras `sample` sea `true` la tarjeta dice

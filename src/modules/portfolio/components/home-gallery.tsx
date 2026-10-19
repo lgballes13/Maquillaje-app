@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
 import { FillImage } from "@/components/fill-image";
 import { cn } from "@/lib/utils";
@@ -8,65 +5,59 @@ import { cn } from "@/lib/utils";
 export interface GalleryWork {
   id: string;
   title: string;
-  categoryId: string | null;
   categoryName: string | null;
   image: { url: string; alt: string };
 }
 
 interface HomeGalleryProps {
   categories: { id: string; name: string }[];
+  /** Categoría elegida en el filtro (null = todas). */
+  active: { id: string; name: string } | null;
   works: GalleryWork[];
   /** En local las fotos vienen de http://127.0.0.1 y no pasan por el optimizador. */
   unoptimized: boolean;
 }
 
-/** Cuántos trabajos se muestran por filtro; el resto está en /portafolio. */
-const VISIBLE = 6;
-
-/** Galería del inicio: los filtros cambian los trabajos sin recargar la página. */
-export function HomeGallery({ categories, works, unoptimized }: HomeGalleryProps) {
-  const [active, setActive] = useState<string | null>(null);
-  // El aviso para lectores de pantalla solo se escribe después de usar un filtro.
-  const [filtered, setFiltered] = useState(false);
-  const matching = active ? works.filter((work) => work.categoryId === active) : works;
-  const shown = matching.slice(0, VISIBLE);
-  const activeName = categories.find((category) => category.id === active)?.name;
-
+/**
+ * Galería del inicio. Los filtros son enlaces (?galeria=<categoría>): Next.js cambia los
+ * trabajos sin recargar la página ni mover el scroll, y no suma JavaScript al inicio, que
+ * tiene que cargar rápido en celulares lentos.
+ */
+export function HomeGallery({ categories, active, works, unoptimized }: HomeGalleryProps) {
   return (
     <div className="mt-10">
-      <div
-        role="group"
-        aria-label="Filtrar trabajos por categoría"
-        className="flex flex-wrap justify-center gap-2"
-      >
-        {[{ id: null, name: "Todos" }, ...categories].map((category) => (
-          <button
-            key={category.id ?? "todos"}
-            type="button"
-            aria-pressed={active === category.id}
-            onClick={() => {
-              setActive(category.id);
-              setFiltered(true);
-            }}
-            className="inline-flex min-h-11 items-center rounded-full border border-gold/50 bg-card px-5 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
-          >
-            {category.name}
-          </button>
-        ))}
-      </div>
+      <nav aria-label="Filtrar trabajos por categoría">
+        <ul className="flex flex-wrap justify-center gap-2">
+          {[{ id: null, name: "Todos" }, ...categories].map((category) => {
+            const current = (active?.id ?? null) === category.id;
+            return (
+              <li key={category.id ?? "todos"}>
+                <Link
+                  href={category.id ? `/?galeria=${category.id}` : "/"}
+                  scroll={false}
+                  aria-current={current ? "true" : undefined}
+                  className="inline-flex min-h-11 items-center rounded-full border border-gold/50 bg-card px-5 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none aria-[current=true]:border-primary aria-[current=true]:bg-primary aria-[current=true]:text-primary-foreground"
+                >
+                  {category.name}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
 
       <p role="status" className="sr-only">
-        {filtered
-          ? `${shown.length === 1 ? "1 trabajo" : `${shown.length} trabajos`}${activeName ? ` de ${activeName}` : ""}`
+        {active
+          ? `${works.length === 1 ? "1 trabajo" : `${works.length} trabajos`} de ${active.name}`
           : ""}
       </p>
 
-      {shown.length ? (
+      {works.length ? (
         <ul
           aria-label="Trabajos destacados"
           className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3"
         >
-          {shown.map((work, index) => (
+          {works.map((work, index) => (
             <li key={work.id} className={cn(index === 0 && "col-span-2 lg:col-span-1")}>
               <Link
                 href={`/portafolio/${work.id}`}
@@ -98,7 +89,7 @@ export function HomeGallery({ categories, works, unoptimized }: HomeGalleryProps
           data-testid="gallery-empty-category"
           className="mx-auto mt-8 max-w-md rounded-2xl border border-gold/40 bg-card px-6 py-8 text-center text-muted-foreground"
         >
-          Todavía no hay trabajos de {activeName ?? "esta categoría"} publicados. Mira las demás
+          Todavía no hay trabajos de {active?.name ?? "esta categoría"} publicados. Mira las demás
           categorías o el portafolio completo.
         </p>
       )}

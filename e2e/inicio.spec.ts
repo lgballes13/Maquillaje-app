@@ -101,26 +101,29 @@ test.describe("Página de inicio", () => {
 
     await page.goto("/");
     const gallery = page.getByRole("region", { name: "Trabajos reales" });
-    const filters = gallery.getByRole("group", { name: "Filtrar trabajos por categoría" });
-    await expect(filters.getByRole("button", { name: "Todos" })).toHaveAttribute(
-      "aria-pressed",
+    const filters = gallery.getByRole("navigation", { name: "Filtrar trabajos por categoría" });
+    await expect(filters.getByRole("link", { name: "Todos" })).toHaveAttribute(
+      "aria-current",
       "true",
     );
     const works = gallery.getByRole("list", { name: "Trabajos destacados" });
     await expect(works.getByRole("link", { name: new RegExp(title) })).toBeVisible();
 
-    await filters.getByRole("button", { name: withWork.name }).click();
-    await expect(filters.getByRole("button", { name: withWork.name })).toHaveAttribute(
-      "aria-pressed",
+    // El filtro cambia la galería sin recargar: una marca en window sobrevive.
+    await page.evaluate(() => Object.assign(window, { sinRecargar: true }));
+    await filters.getByRole("link", { name: withWork.name }).click();
+    await expect(filters.getByRole("link", { name: withWork.name })).toHaveAttribute(
+      "aria-current",
       "true",
     );
     await expect(works.getByRole("listitem")).toHaveCount(1);
     await expect(gallery.getByRole("status")).toHaveText(`1 trabajo de ${withWork.name}`);
+    expect(await page.evaluate(() => "sinRecargar" in window)).toBe(true);
 
-    await filters.getByRole("button", { name: empty.name }).click();
+    await filters.getByRole("link", { name: empty.name }).click();
     await expect(gallery.getByTestId("gallery-empty-category")).toContainText(empty.name);
 
-    await filters.getByRole("button", { name: "Todos" }).click();
+    await filters.getByRole("link", { name: "Todos" }).click();
     await works.getByRole("link", { name: new RegExp(title) }).click();
     await expect(page).toHaveURL(/\/portafolio\/[0-9a-f-]+$/);
     await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible();

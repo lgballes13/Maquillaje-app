@@ -48,7 +48,6 @@ export async function getPortfolioCategories() {
 export interface PortfolioCard {
   id: string;
   title: string;
-  categoryId: string | null;
   categoryName: string | null;
   before: PortfolioImage | null;
   after: PortfolioImage | null;
@@ -62,7 +61,7 @@ export async function getPublishedWorks(
   let query = supabase
     .from("portfolio_works")
     .select(
-      "id, title, portfolio_categories(id, name, is_active), portfolio_images(kind, storage_path, alt_text, sort_order)",
+      "id, title, portfolio_categories(name, is_active), portfolio_images(kind, storage_path, alt_text, sort_order)",
     )
     .eq("is_published", true)
     .order("sort_order")
@@ -73,12 +72,10 @@ export async function getPublishedWorks(
   if (error) throw new Error(`No se pudo cargar el portafolio: ${error.message}`);
   return data.map((work) => {
     const cover = pickCover(work.portfolio_images);
-    const category = work.portfolio_categories?.is_active ? work.portfolio_categories : null;
     return {
       id: work.id,
       title: work.title,
-      categoryId: category?.id ?? null,
-      categoryName: category?.name ?? null,
+      categoryName: work.portfolio_categories?.is_active ? work.portfolio_categories.name : null,
       before: toImage(cover.before),
       after: toImage(cover.after),
     };

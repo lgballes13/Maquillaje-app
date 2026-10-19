@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { Suspense } from "react";
+import { z } from "zod";
 import { ArrowRight, MessageCircle, Quote } from "lucide-react";
 import { FillImage } from "@/components/fill-image";
 import { TESTIMONIALS } from "@/config/testimonials";
@@ -105,7 +106,10 @@ function businessJsonLd() {
   };
 }
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: PageProps<"/">) {
+  // Filtro de la galería (?galeria=<id de categoría>); un valor inválido muestra todos.
+  const requested = z.uuid().safeParse((await searchParams).galeria);
+  const galleryCategoryId = requested.success ? requested.data : null;
   // El JSON-LD va en un <script>: lleva el nonce de la CSP como los demás (DT-004).
   const nonce = (await headers()).get("x-nonce") ?? undefined;
 
@@ -123,7 +127,7 @@ export default async function HomePage() {
 
       <Services />
       <Modules />
-      <Gallery />
+      <Gallery categoryId={galleryCategoryId} />
       <Testimonials />
       <FinalCta />
     </main>
@@ -241,7 +245,7 @@ function Modules() {
 }
 
 /** Galería editorial con los trabajos publicados del portafolio. */
-function Gallery() {
+function Gallery({ categoryId }: { categoryId: string | null }) {
   return (
     <section aria-labelledby="titulo-galeria" className="px-4 py-20 sm:py-24">
       <SectionHeading
@@ -268,7 +272,7 @@ function Gallery() {
             </div>
           }
         >
-          <GalleryWorks />
+          <GalleryWorks categoryId={categoryId} />
         </Suspense>
         <p className="mt-10 text-center">
           <Link
@@ -284,27 +288,20 @@ function Gallery() {
   );
 }
 
-async function GalleryWorks() {
-  const [categories, works] = await Promise.all([
-    getPortfolioCategories(),
-    getPublishedWorks(null, { limit: 24 }),
-  ]);
-  const withImage: GalleryWork[] = works.flatMap((work) => {
+/** Cuántos trabajos muestra la galería por filtro; el resto está en /portafolio. */
+const GALLERY_SIZE = 6;
+
+async function GalleryWorks({ categoryId }: { categoryId: string | null }) {
+  const categories = await getPortfolioCategories();
+  const active = categories.find((category) => category.id === categoryId) ?? null;
+  // Se piden de más por si alguno no tiene foto todavía.
+  const works = await getPublishedWorks(active?.id ?? null, { limit: GALLERY_SIZE * 2 });
+  const withImage = works.flatMap((work) => {
     const cover = work.after ?? work.before;
-    return cover
-      ? [
-          {
-            id: work.id,
-            title: work.title,
-            categoryId: work.categoryId,
-            categoryName: work.categoryName,
-            image: { url: cover.url, alt: cover.alt },
-          },
-        ]
-      : [];
+    return cover ? [{ ...work, image: { url: cover.url, alt: cover.alt } }] : [];
   });
 
-  if (withImage.length === 0) {
+  if (!active && withImage.length === 0) {
     return (
       <div
         data-testid="gallery-empty"
@@ -323,7 +320,17 @@ async function GalleryWorks() {
     );
   }
 
-  return <HomeGallery categories={categories} works={withImage} unoptimized={UNOPTIMIZED_IMAGES} />;
+  const shown: GalleryWork[] = withImage
+    .slice(0, GALLERY_SIZE)
+    .map(({ id, title, categoryName, image }) => ({ id, title, categoryName, image }));
+  return (
+    <HomeGallery
+      categories={categories}
+      active={active}
+      works={shown}
+      unoptimized={UNOPTIMIZED_IMAGES}
+    />
+  );
 }
 
 /** Testimonios de clientas; los de ejemplo se marcan como tales (ver src/config/testimonials.ts). */
