@@ -19,7 +19,7 @@ export default async function AdminCustomersPage({ searchParams }: PageProps<"/a
 
   return (
     <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
-      <h1 className="text-2xl font-bold tracking-tight">Clientas</h1>
+      <h1 className="text-4xl text-plum">Clientas</h1>
       <p className="mt-2 text-muted-foreground">
         Busca por nombre, correo o teléfono. Sus datos son personales (Ley 1581): úsalos solo para
         atenderlas.

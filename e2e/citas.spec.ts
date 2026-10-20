@@ -10,6 +10,7 @@ import {
 } from "./helpers/booking";
 import { createTestUser } from "./helpers/supabase";
 import { signedWompiEvent } from "./helpers/wompi";
+import { openAdminNav } from "./helpers/nav";
 
 /*
  * Flujo de citas y pagos. Las pruebas corren en paralelo contra la MISMA base
@@ -38,7 +39,10 @@ test.describe("Agendar una cita", () => {
     const user = await createTestUser({ name: "Clienta Agenda" });
 
     await page.goto("/");
-    await page.getByRole("link", { name: "Agendar ahora" }).click();
+    await page
+      .getByRole("region", { name: "Tu belleza, elevada" })
+      .getByRole("link", { name: "Agendar cita" })
+      .click();
     await expect(page.getByRole("heading", { name: "Elige tu servicio" })).toBeVisible();
     await expectNoA11yViolations(page);
 
@@ -160,7 +164,7 @@ test.describe("Panel: servicios y bloqueos", () => {
 
     // Servicio nuevo: aparece para agendar.
     const name = `Peinado ${Math.random().toString(36).slice(2, 7)}`;
-    await page.getByRole("link", { name: /Servicios/ }).click();
+    await (await openAdminNav(page)).getByRole("link", { name: "Servicios" }).click();
     const newService = page.getByRole("region", { name: "Nuevo servicio" });
     await newService.getByLabel("Nombre").fill(name);
     await newService.getByLabel("Duración (minutos)").fill("60");

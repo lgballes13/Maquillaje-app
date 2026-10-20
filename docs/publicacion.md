@@ -48,24 +48,27 @@ registrador `.co`).
    Next.js solo; no cambies los comandos.
 2. En **Settings → Environment Variables** agrega estas variables para _Production_:
 
-   | Variable                        | Valor                                              |
-   | ------------------------------- | -------------------------------------------------- |
-   | `NEXT_PUBLIC_SITE_URL`          | `https://tudominio.com` (sin `/` al final)         |
-   | `NEXT_PUBLIC_BUSINESS_NAME`     | El nombre del negocio                              |
-   | `NEXT_PUBLIC_WHATSAPP_NUMBER`   | Solo dígitos, ej.: `573001234567`                  |
-   | `NEXT_PUBLIC_CONTACT_EMAIL`     | Correo para quejas, reclamos y datos personales    |
-   | `NEXT_PUBLIC_BUSINESS_LEGAL_ID` | NIT o cédula del responsable                       |
-   | `NEXT_PUBLIC_BUSINESS_ADDRESS`  | Dirección del estudio                              |
-   | `NEXT_PUBLIC_SUPABASE_URL`      | URL del proyecto de Supabase                       |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave `anon` de Supabase                           |
-   | `SUPABASE_SERVICE_ROLE_KEY`     | **Secreta.** Clave `service_role` de Supabase      |
-   | `NEXT_PUBLIC_WOMPI_PUBLIC_KEY`  | Paso 5 (al principio, la de pruebas `pub_test_…`)  |
-   | `WOMPI_INTEGRITY_SECRET`        | **Secreta.** Paso 5                                |
-   | `WOMPI_EVENTS_SECRET`           | **Secreta.** Paso 5                                |
-   | `RESEND_API_KEY`                | **Secreta.** La API key de Resend                  |
-   | `EMAIL_FROM`                    | Ej.: `Estudio <citas@tudominio.com>`               |
-   | `CRON_SECRET`                   | **Secreta.** Genera una con `openssl rand -hex 32` |
-   | `NEXT_PUBLIC_SENTRY_DSN`        | Opcional, paso 6                                   |
+   | Variable                        | Valor                                               |
+   | ------------------------------- | --------------------------------------------------- |
+   | `NEXT_PUBLIC_SITE_URL`          | `https://tudominio.com` (sin `/` al final)          |
+   | `NEXT_PUBLIC_BUSINESS_NAME`     | El nombre del negocio                               |
+   | `NEXT_PUBLIC_WHATSAPP_NUMBER`   | Solo dígitos, ej.: `573001234567`                   |
+   | `NEXT_PUBLIC_CONTACT_EMAIL`     | Correo para quejas, reclamos y datos personales     |
+   | `NEXT_PUBLIC_BUSINESS_LEGAL_ID` | NIT o cédula del responsable                        |
+   | `NEXT_PUBLIC_BUSINESS_ADDRESS`  | Dirección del estudio                               |
+   | `NEXT_PUBLIC_INSTAGRAM_URL`     | Opcional. Enlace `https://` al perfil de Instagram  |
+   | `NEXT_PUBLIC_TIKTOK_URL`        | Opcional. Enlace `https://` al perfil de TikTok     |
+   | `NEXT_PUBLIC_FACEBOOK_URL`      | Opcional. Enlace `https://` a la página de Facebook |
+   | `NEXT_PUBLIC_SUPABASE_URL`      | URL del proyecto de Supabase                        |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave `anon` de Supabase                            |
+   | `SUPABASE_SERVICE_ROLE_KEY`     | **Secreta.** Clave `service_role` de Supabase       |
+   | `NEXT_PUBLIC_WOMPI_PUBLIC_KEY`  | Paso 5 (al principio, la de pruebas `pub_test_…`)   |
+   | `WOMPI_INTEGRITY_SECRET`        | **Secreta.** Paso 5                                 |
+   | `WOMPI_EVENTS_SECRET`           | **Secreta.** Paso 5                                 |
+   | `RESEND_API_KEY`                | **Secreta.** La API key de Resend                   |
+   | `EMAIL_FROM`                    | Ej.: `Estudio <citas@tudominio.com>`                |
+   | `CRON_SECRET`                   | **Secreta.** Genera una con `openssl rand -hex 32`  |
+   | `NEXT_PUBLIC_SENTRY_DSN`        | Opcional, paso 6                                    |
 
    No agregues `MAILPIT_URL`: es solo para tu computador.
 

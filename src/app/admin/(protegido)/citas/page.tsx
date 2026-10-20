@@ -67,7 +67,7 @@ export default async function AdminAppointmentsPage() {
 
   return (
     <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
-      <h1 className="text-2xl font-bold tracking-tight">Citas</h1>
+      <h1 className="text-4xl text-plum">Citas</h1>
 
       {toReview?.length ? (
         <section

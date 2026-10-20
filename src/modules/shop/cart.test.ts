@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addItem, cartUnits, parseCart, removeItem, setItemQuantity } from "./cart";
+import { cartSchema } from "./schemas";
 
 const A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -65,5 +66,40 @@ describe("cambios del carrito", () => {
         A,
       ),
     ).toEqual([{ productId: B, quantity: 1 }]);
+  });
+});
+
+describe("parseCart acepta lo mismo que cartSchema", () => {
+  const item = (productId: unknown, quantity: unknown) => ({ productId, quantity });
+  it.each([
+    [[]],
+    [[item(A, 1), item(B, 10)]],
+    [[item(A.toUpperCase(), 3)]],
+    [[{ ...item(A, 2), extra: "se ignora" }]],
+    [[item(A, 0)]],
+    [[item(A, 11)]],
+    [[item(A, 2.5)]],
+    [[item(A, "2")]],
+    [[item(A, null)]],
+    [[item("aaaaaaaa-aaaa-9aaa-8aaa-aaaaaaaaaaaa", 1)]],
+    [[item(123, 1)]],
+    [[null]],
+    [[[A, 1]]],
+    [[item(A, 1), item(A, 1)]],
+    [
+      Array.from({ length: 20 }, (_, i) =>
+        item(`${String(i).padStart(8, "0")}-aaaa-4aaa-8aaa-aaaaaaaaaaaa`, 1),
+      ),
+    ],
+    [
+      Array.from({ length: 21 }, (_, i) =>
+        item(`${String(i).padStart(8, "0")}-aaaa-4aaa-8aaa-aaaaaaaaaaaa`, 1),
+      ),
+    ],
+    [{ 0: item(A, 1) }],
+    ["texto"],
+  ])("%j", (value) => {
+    const parsed = cartSchema.safeParse(value);
+    expect(parseCart(JSON.stringify(value))).toEqual(parsed.success ? parsed.data : []);
   });
 });

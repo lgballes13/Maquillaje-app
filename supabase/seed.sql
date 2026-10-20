@@ -61,6 +61,6 @@ insert into public.products (id, name, description, category_id, price_cop, stoc
 
 -- Portafolio: categorías de ejemplo (los trabajos los crea la admin con su autorización firmada).
 insert into public.portfolio_categories (id, name, sort_order) values
-  ('cccccccc-0000-4000-8000-000000000001', 'Novia', 1),
+  ('cccccccc-0000-4000-8000-000000000001', 'Novias', 1),
   ('cccccccc-0000-4000-8000-000000000002', 'Social', 2),
-  ('cccccccc-0000-4000-8000-000000000003', 'Editorial', 3);
+  ('cccccccc-0000-4000-8000-000000000003', 'Beauty', 3);

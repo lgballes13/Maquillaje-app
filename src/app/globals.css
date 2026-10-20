@@ -2,31 +2,38 @@
 @import "tw-animate-css";
 
 /*
- * Paleta provisional (tonos rosa y nude). Se reemplaza cuando tengamos los
- * colores de la marca. Todas las combinaciones texto/fondo cumplen contraste
- * WCAG AA (mínimo 4.5:1).
+ * Paleta de ROYMAKEUP: marfil cálido, borgoña/ciruela, rosa empolvado y
+ * dorado suave. Contrastes medidos (WCAG AA pide 4.5:1 en texto normal):
+ * texto/fondo 15.5, borgoña/marfil 9.1, texto secundario/marfil 6.5,
+ * dorado oscuro/marfil 5.2, dorado/ciruela 8.3, marfil/ciruela 14.
+ * El dorado claro (--gold) es solo decorativo o va sobre ciruela.
  */
 :root {
   color-scheme: light;
   --radius: 0.75rem;
-  --background: oklch(0.99 0.004 350);
-  --foreground: oklch(0.22 0.02 350);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.02 350);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.02 350);
-  --primary: oklch(0.46 0.16 0);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.95 0.02 20);
-  --secondary-foreground: oklch(0.3 0.04 10);
-  --muted: oklch(0.96 0.01 350);
-  --muted-foreground: oklch(0.45 0.02 350);
-  --accent: oklch(0.94 0.03 20);
-  --accent-foreground: oklch(0.3 0.04 10);
+  --background: oklch(0.975 0.012 75);
+  --foreground: oklch(0.24 0.04 350);
+  --card: oklch(0.99 0.007 75);
+  --card-foreground: oklch(0.24 0.04 350);
+  --popover: oklch(0.99 0.007 75);
+  --popover-foreground: oklch(0.24 0.04 350);
+  --primary: oklch(0.4 0.12 5);
+  --primary-foreground: oklch(0.985 0.01 75);
+  --secondary: oklch(0.92 0.035 15);
+  --secondary-foreground: oklch(0.32 0.07 358);
+  --muted: oklch(0.945 0.016 60);
+  --muted-foreground: oklch(0.47 0.035 350);
+  --accent: oklch(0.93 0.03 20);
+  --accent-foreground: oklch(0.32 0.07 358);
   --destructive: oklch(0.5 0.2 27);
-  --border: oklch(0.9 0.015 350);
-  --input: oklch(0.9 0.015 350);
-  --ring: oklch(0.46 0.16 0);
+  --border: oklch(0.88 0.025 50);
+  --input: oklch(0.85 0.03 50);
+  --ring: oklch(0.4 0.12 5);
+  /* Detalles de marca. */
+  --gold: oklch(0.78 0.1 80);
+  --gold-foreground: oklch(0.52 0.09 70);
+  --plum: oklch(0.24 0.06 345);
+  --plum-foreground: oklch(0.94 0.02 60);
 }
 
 @theme inline {
@@ -52,7 +59,12 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-plum: var(--plum);
+  --color-plum-foreground: var(--plum-foreground);
   --font-sans: var(--font-sans-family);
+  --font-serif: var(--font-serif-family);
 }
 
 @layer base {
@@ -65,6 +77,15 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+  }
+  /* Títulos en serif editorial; el resto del texto sigue en sans-serif. */
+  h1,
+  h2,
+  h3 {
+    @apply font-serif font-medium tracking-tight;
+  }
+  :is(h1, h2, h3) em {
+    font-family: var(--font-serif-italic-family);
   }
   /* Respeta a quien pide menos animaciones en su sistema operativo. */
   @media (prefers-reduced-motion: reduce) {

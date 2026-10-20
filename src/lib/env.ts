@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+function socialUrl(name: string) {
+  return z.url({ protocol: /^https$/, message: `${name} debe ser un enlace https://` }).optional();
+}
+
 /**
  * Variables de entorno PÚBLICAS (llegan al navegador).
  * Regla de oro: aquí NUNCA va un secreto. Los secretos (claves de pago,
@@ -20,6 +24,10 @@ export const publicEnvSchema = z.object({
     .optional(),
   NEXT_PUBLIC_BUSINESS_LEGAL_ID: z.string().trim().max(40).optional(),
   NEXT_PUBLIC_BUSINESS_ADDRESS: z.string().trim().max(160).optional(),
+  // Redes sociales del pie de página: cada una aparece solo si tiene enlace (https).
+  NEXT_PUBLIC_INSTAGRAM_URL: socialUrl("NEXT_PUBLIC_INSTAGRAM_URL"),
+  NEXT_PUBLIC_TIKTOK_URL: socialUrl("NEXT_PUBLIC_TIKTOK_URL"),
+  NEXT_PUBLIC_FACEBOOK_URL: socialUrl("NEXT_PUBLIC_FACEBOOK_URL"),
   NEXT_PUBLIC_SUPABASE_URL: z.url().optional(),
   // La clave "anon" o "publishable" es pública por diseño: la protección real
   // son las reglas RLS de la base de datos.
@@ -60,11 +68,14 @@ export function parsePublicEnv(source: Record<string, string | undefined>): Publ
 // por eso las listamos una por una en lugar de pasar process.env completo.
 export const publicEnv = parsePublicEnv({
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-  NEXT_PUBLIC_BUSINESS_NAME: process.env.NEXT_PUBLIC_BUSINESS_NAME ?? "Estudio de Maquillaje",
+  NEXT_PUBLIC_BUSINESS_NAME: process.env.NEXT_PUBLIC_BUSINESS_NAME ?? "ROYMAKEUP",
   NEXT_PUBLIC_WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
   NEXT_PUBLIC_CONTACT_EMAIL: process.env.NEXT_PUBLIC_CONTACT_EMAIL,
   NEXT_PUBLIC_BUSINESS_LEGAL_ID: process.env.NEXT_PUBLIC_BUSINESS_LEGAL_ID,
   NEXT_PUBLIC_BUSINESS_ADDRESS: process.env.NEXT_PUBLIC_BUSINESS_ADDRESS,
+  NEXT_PUBLIC_INSTAGRAM_URL: process.env.NEXT_PUBLIC_INSTAGRAM_URL,
+  NEXT_PUBLIC_TIKTOK_URL: process.env.NEXT_PUBLIC_TIKTOK_URL,
+  NEXT_PUBLIC_FACEBOOK_URL: process.env.NEXT_PUBLIC_FACEBOOK_URL,
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,

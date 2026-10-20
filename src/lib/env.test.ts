@@ -39,4 +39,20 @@ describe("parsePublicEnv", () => {
       /correo válido/,
     );
   });
+
+  it("acepta redes sociales solo con enlaces https", () => {
+    const env = parsePublicEnv({
+      ...valid,
+      NEXT_PUBLIC_INSTAGRAM_URL: "https://instagram.com/roymakeup",
+      NEXT_PUBLIC_TIKTOK_URL: "",
+    });
+    expect(env.NEXT_PUBLIC_INSTAGRAM_URL).toBe("https://instagram.com/roymakeup");
+    expect(env.NEXT_PUBLIC_TIKTOK_URL).toBeUndefined();
+    expect(() =>
+      parsePublicEnv({ ...valid, NEXT_PUBLIC_FACEBOOK_URL: "javascript:alert(1)" }),
+    ).toThrow(/NEXT_PUBLIC_FACEBOOK_URL debe ser un enlace https/);
+    expect(() =>
+      parsePublicEnv({ ...valid, NEXT_PUBLIC_INSTAGRAM_URL: "http://instagram.com/x" }),
+    ).toThrow(/enlace https/);
+  });
 });

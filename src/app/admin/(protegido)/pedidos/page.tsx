@@ -54,7 +54,7 @@ export default async function AdminOrdersPage({ searchParams }: PageProps<"/admi
 
   return (
     <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
-      <h1 className="text-2xl font-bold tracking-tight">Pedidos</h1>
+      <h1 className="text-4xl text-plum">Pedidos</h1>
 
       {toReview?.length ? (
         <section

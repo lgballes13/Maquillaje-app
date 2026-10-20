@@ -6,8 +6,16 @@ import { publicEnv } from "@/lib/env";
  */
 export const siteConfig = {
   name: publicEnv.NEXT_PUBLIC_BUSINESS_NAME,
+  tagline: "Tu belleza, elevada",
   description:
-    "Maquillaje profesional para novias, eventos sociales y asesorías. Agenda tu cita en línea y compra tus productos favoritos.",
+    "Estudio boutique de maquillaje profesional para novias, eventos sociales y asesorías personalizadas. Agenda tu cita en línea, compra tus productos y mira nuestro portafolio.",
+  keywords: [
+    "maquillaje profesional",
+    "maquillaje de novia",
+    "maquillaje social",
+    "asesoría de maquillaje",
+    "estudio de maquillaje",
+  ],
   url: publicEnv.NEXT_PUBLIC_SITE_URL,
   locale: "es_CO",
   // Zona horaria del negocio (pendiente de confirmar). Todas las horas se muestran en ella.
@@ -17,5 +25,11 @@ export const siteConfig = {
   contactEmail: publicEnv.NEXT_PUBLIC_CONTACT_EMAIL,
   legalId: publicEnv.NEXT_PUBLIC_BUSINESS_LEGAL_ID,
   address: publicEnv.NEXT_PUBLIC_BUSINESS_ADDRESS,
+  // Redes sociales del pie de página; las que no tengan enlace no se muestran.
+  social: {
+    instagram: publicEnv.NEXT_PUBLIC_INSTAGRAM_URL,
+    tiktok: publicEnv.NEXT_PUBLIC_TIKTOK_URL,
+    facebook: publicEnv.NEXT_PUBLIC_FACEBOOK_URL,
+  },
   whatsappMessage: "Hola, tengo una pregunta sobre sus servicios de maquillaje.",
 } as const;

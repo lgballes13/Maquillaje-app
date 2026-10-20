@@ -18,7 +18,7 @@ export default async function BusinessRulesPage() {
 
   return (
     <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
-      <h1 className="text-2xl font-bold tracking-tight">Reglas del negocio</h1>
+      <h1 className="text-4xl text-plum">Reglas del negocio</h1>
       <p className="mt-2 text-muted-foreground">
         Versión vigente: <strong>{current.version}</strong> (desde{" "}
         {formatDateTime(current.created_at)}). Cada cambio crea una versión nueva; las citas

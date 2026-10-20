@@ -53,7 +53,7 @@ export default async function AdminProductsPage() {
 
   return (
     <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
-      <h1 className="text-2xl font-bold tracking-tight">Productos</h1>
+      <h1 className="text-4xl text-plum">Productos</h1>
       <p className="mt-2 text-muted-foreground">
         Los productos no se borran (los pedidos los usan): desmarca «Visible en la tienda» para
         ocultarlos. Cambiar un precio no afecta los pedidos ya hechos.

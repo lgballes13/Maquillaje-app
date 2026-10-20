@@ -32,7 +32,7 @@ export default async function AdminReportsPage({ searchParams }: PageProps<"/adm
 
   return (
     <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
-      <h1 className="text-2xl font-bold tracking-tight">Reportes</h1>
+      <h1 className="text-4xl text-plum">Reportes</h1>
       <p className="mt-2 text-muted-foreground">
         Del {formatLongDate(range.from)} al {formatLongDate(range.to)}. Solo cuenta lo que se pagó
         en línea (Wompi); el saldo de las citas que se paga en el estudio no aparece aquí.

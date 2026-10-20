@@ -53,7 +53,10 @@ export interface PortfolioCard {
   after: PortfolioImage | null;
 }
 
-export async function getPublishedWorks(categoryId: string | null): Promise<PortfolioCard[]> {
+export async function getPublishedWorks(
+  categoryId: string | null,
+  { limit = 100 }: { limit?: number } = {},
+): Promise<PortfolioCard[]> {
   const supabase = await createClient();
   let query = supabase
     .from("portfolio_works")
@@ -63,7 +66,7 @@ export async function getPublishedWorks(categoryId: string | null): Promise<Port
     .eq("is_published", true)
     .order("sort_order")
     .order("published_at", { ascending: false })
-    .limit(100);
+    .limit(limit);
   if (categoryId) query = query.eq("category_id", categoryId);
   const { data, error } = await query;
   if (error) throw new Error(`No se pudo cargar el portafolio: ${error.message}`);

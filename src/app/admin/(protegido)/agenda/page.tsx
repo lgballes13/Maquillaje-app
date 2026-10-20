@@ -41,7 +41,7 @@ export default async function AdminAgendaPage({ searchParams }: PageProps<"/admi
 
   return (
     <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
-      <h1 className="text-2xl font-bold tracking-tight">Agenda</h1>
+      <h1 className="text-4xl text-plum">Agenda</h1>
       <p className="mt-2 text-muted-foreground" aria-live="polite">
         {range.view === "dia"
           ? formatLongDate(first)

@@ -489,7 +489,10 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   CSP y con `<` escapado.
 - Zod v4 prueba `new Function("")` para compilar validaciones más rápido; la CSP lo bloquea y
   Lighthouse lo cuenta como error de consola. `z.config({ jitless: true })` en
-  `instrumentation-client.ts` lo evita sin cambiar la CSP.
+  `instrumentation-client.ts` lo evita sin cambiar la CSP. Ahí se importa solo `zod/v4/core`, y
+  el carrito del navegador (`parseCart`, en todas las páginas por el contador) valida sin Zod con
+  los mismos criterios de `cartSchema` (una prueba lo compara). Así ninguna página pública carga
+  los 31 KB de Zod, y el inicio gana margen en Lighthouse.
 - `next/image` con `fill` escribe un atributo `style` que la CSP bloquea (las fotos de la tienda
   y del portafolio perdían su posición y la consola mostraba errores). `FillImage`
   (`src/components/fill-image.tsx`) usa `getImageProps` y da la misma posición con clases.
@@ -508,3 +511,48 @@ Si una decisión cambia, no se borra: se marca como reemplazada y se agrega una 
   verde sin hacer nada.
 - No cubre Storage. Si se pasa a Supabase Pro, sus respaldos diarios reemplazan o complementan
   este flujo.
+
+## DT-042 · Identidad visual de ROYMAKEUP (rediseño)
+
+**Fecha:** 2026-10-19 · **Estado:** vigente
+
+- Paleta en `globals.css`: marfil cálido de fondo, borgoña como color principal, ciruela para
+  títulos y secciones oscuras, rosa empolvado y dorado suave para detalles. Cada par texto/fondo
+  se midió (todos ≥ 4.5:1). El dorado claro (`--gold`) es solo decorativo o va sobre ciruela; para
+  texto dorado sobre marfil se usa `--gold-foreground`.
+- Tipografías con `next/font` (se sirven desde nuestro dominio): Cormorant Garamond para `h1`–`h3`
+  y el logo, Manrope para el resto. Los títulos toman la serif por defecto desde la capa base.
+  Cormorant es variable y se precarga; su itálica (solo para `<em>` en títulos) va aparte, sin
+  precarga y en un solo peso (500, 24 KB en vez de 40 KB del archivo variable). Con 6 archivos precargados la tienda bajó a 88 en Lighthouse; sin precargar nada,
+  la primera pintura del inicio subía de 0.8 a 1.4 s.
+- Las ilustraciones se sirven sin el optimizador de imágenes (`unoptimized`): pesan de 9 a 22 KB y
+  el optimizador tardaba en la primera visita. El hero se exporta a 800×1000 (12 KB).
+- Botones en forma de píldora en toda la app (`button.tsx`) y encabezados de sección con
+  `SectionHeading` (antetítulo dorado, título serif, línea de contexto).
+- El nombre del logo sale de `NEXT_PUBLIC_BUSINESS_NAME` (valor por defecto: ROYMAKEUP). En
+  Vercel hay que poner ese valor para que se vea en el sitio publicado.
+- Encabezado fijo arriba. En el celular el menú va detrás de un botón «Menú» (aria-expanded,
+  se cierra con Escape, al elegir una opción y al cambiar de página); ingresar y carrito siguen
+  visibles como íconos con nombre accesible.
+- Imágenes: no se pueden descargar fotos de bancos de imágenes desde el entorno de trabajo ni
+  generar fotos realistas. Se dibujan ilustraciones editoriales propias en SVG
+  (`design/ilustraciones/`) y se exportan a WebP en `public/images/`. Para usar una foto real,
+  se reemplaza el archivo WebP con el mismo nombre (proporción 4:5 en el hero).
+- Las viñetas decorativas son formas de CSS (un rombo dorado), no caracteres como «✦»: esos
+  caracteres no existen en nuestras fuentes y el navegador buscaba una de reserva, lo que
+  duplicaba el tiempo del primer dibujo del inicio en celular.
+- Galería del inicio (etapa 3): muestra los trabajos publicados del portafolio (hasta 6 por
+  filtro). Los filtros son enlaces `?galeria=<categoría>` con `scroll={false}`: Next.js cambia los
+  trabajos sin recargar la página y sin sumar JavaScript al inicio (un componente de cliente para
+  filtrar agregaba un archivo JS y bajó el inicio a 84–88 en la CI). Los filtros son las
+  categorías activas del panel. Se carga dentro de un `Suspense` para que el resto del inicio no
+  espere la consulta. Sin trabajos publicados muestra un estado vacío con botón a agendar.
+- Testimonios: archivo `src/config/testimonials.ts`; mientras `sample` sea `true` la tarjeta dice
+  «Ejemplo», para no presentar textos inventados como reseñas reales.
+- Pie de página: redes sociales opcionales por variables `NEXT_PUBLIC_*_URL` (solo `https`); cada
+  red y cada dato de contacto aparece solo si está configurado.
+- Panel (etapa 4): barra lateral agrupada (General, Citas, Tienda, Portafolio, Configuración) en
+  `src/components/admin-sidebar.tsx`, dentro del layout protegido para que no aparezca antes del
+  2FA. En el celular va detrás de «Menú del panel» (aria-expanded, Escape). El Resumen solo lee
+  datos que ya existían (agenda, `admin_report`, pedidos, productos); no hay tablas nuevas. «Stock
+  bajo» es 3 unidades o menos (constante `LOW_STOCK`).

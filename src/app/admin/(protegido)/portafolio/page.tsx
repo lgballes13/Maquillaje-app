@@ -56,7 +56,7 @@ export default async function AdminPortfolioPage() {
 
   return (
     <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
-      <h1 className="text-2xl font-bold tracking-tight">Portafolio</h1>
+      <h1 className="text-4xl text-plum">Portafolio</h1>
       <p className="mt-2 text-muted-foreground">
         Solo se publican fotos con la autorización firmada de la clienta (Ley 1581). Primero
         registra la autorización, luego crea el trabajo, súbele fotos y publícalo.
